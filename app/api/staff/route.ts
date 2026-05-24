@@ -5,6 +5,7 @@ import { eq, asc } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('Fetching staff from database...');
     const { searchParams } = new URL(request.url);
     const department = searchParams.get('department');
 
@@ -14,8 +15,10 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await query;
+    console.log('Staff data fetched:', data);
     return NextResponse.json({ success: true, data });
   } catch (error) {
+    console.error('Error fetching staff:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch staff' }, { status: 500 });
   }
 }
