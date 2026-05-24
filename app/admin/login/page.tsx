@@ -18,13 +18,17 @@ export default function AdminLoginPage() {
     setError('');
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
       setError(authError.message || 'Invalid credentials. Please try again.');
       setLoading(false);
       return;
     }
+
+    // Set localStorage token for dashboard authentication
+    localStorage.setItem('admin_token', data.session?.access_token || 'authenticated');
+    localStorage.setItem('admin_role', 'admin');
 
     router.push('/admin/dashboard');
     router.refresh();
