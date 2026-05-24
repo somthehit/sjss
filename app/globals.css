@@ -1,26 +1,99 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fdf6e3;
+  --foreground: #444444;
+  
+  --primary: #1a3a2a;
+  --accent: #c9a227;
+  --highlight: #8b1a1a;
+  --parchment: #fdf6e3;
+  --surface: #ffffff;
+  --charcoal: #444444;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-highlight: var(--highlight);
+  --color-parchment: var(--parchment);
+  --color-surface: var(--surface);
+  --color-charcoal: var(--charcoal);
+  
+  --font-playfair: var(--font-playfair-display), Georgia, serif;
+  --font-inter: var(--font-inter), sans-serif;
+  --font-noto: var(--font-noto-sans), sans-serif;
+  
+  --font-sans: var(--font-inter), sans-serif;
+  --font-serif: var(--font-playfair-display), Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Custom Base Styles */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Premium Typography Elements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair-display), Georgia, serif;
+  color: var(--primary);
+}
+
+.nepali-text {
+  font-family: var(--font-noto-sans), sans-serif;
+}
+
+/* Premium Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Dhaka Motif Repeating Divider Utilities */
+.dhaka-divider {
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='24' viewBox='0 0 60 24'%3E%3Cpath d='M0 12 L15 0 L30 12 L45 0 L60 12 L45 24 L30 12 L15 24 Z' fill='none' stroke='%23c9a227' stroke-width='1.5'/%3E%3Ccircle cx='30' cy='12' r='3' fill='%238b1a1a'/%3E%3Ccircle cx='0' cy='12' r='2' fill='%231a3a2a'/%3E%3Ccircle cx='60' cy='12' r='2' fill='%231a3a2a'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  width: 100%;
+  margin: 2rem 0;
+  opacity: 0.85;
+}
+
+.gold-border-fancy {
+  border: 4px double var(--accent);
+  position: relative;
+}
+
+.parchment-glow {
+  box-shadow: inset 0 0 40px rgba(26, 58, 42, 0.05), 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* For printing */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
 }
