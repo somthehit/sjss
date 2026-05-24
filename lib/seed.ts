@@ -1,8 +1,20 @@
 import { db } from '@/lib/db';
-import { notices, albums, gallery_images, staff, results, site_settings } from '@/lib/schema';
+import { notices, albums, gallery_images, staff, results, site_settings, admin_users } from '@/lib/schema';
+import bcrypt from 'bcrypt';
 
 export async function seedDatabase() {
   console.log('🌱 Seeding database...');
+
+  // Seed admin user
+  const passwordHash = await bcrypt.hash('Admin@4sjss', 10);
+  await db.insert(admin_users).values([
+    {
+      email: 'admin@sjsss.edu.np',
+      password_hash: passwordHash,
+      name: 'Admin',
+      role: 'admin',
+    },
+  ]).onConflictDoNothing();
 
   // Seed site settings
   await db.insert(site_settings).values([
