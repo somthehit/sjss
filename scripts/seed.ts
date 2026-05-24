@@ -1,4 +1,8 @@
+import { config } from 'dotenv';
 import { seedDatabase } from '../lib/seed';
+
+// Load environment variables from .env.local
+config({ path: '.env.local' });
 
 async function main() {
   try {

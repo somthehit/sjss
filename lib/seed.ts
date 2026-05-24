@@ -9,7 +9,7 @@ export async function seedDatabase() {
   const passwordHash = await bcrypt.hash('Admin@4sjss', 10);
   await db.insert(admin_users).values([
     {
-      email: 'admin@sjsss.edu.np',
+      email: 'admin@sjss.edu.np',
       password_hash: passwordHash,
       name: 'Admin',
       role: 'admin',
