@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/components/LanguageContext";
 import DhakaDivider from "@/components/DhakaDivider";
 import { Sparkles, Users, Award, ShieldAlert, GraduationCap, Briefcase } from "lucide-react";
@@ -21,105 +21,39 @@ interface Teacher {
 export default function Faculty() {
   const { t } = useLanguage();
   const [activeDept, setActiveDept] = useState<"All" | "Science" | "Arts" | "Commerce" | "Admin">("All");
+  const [facultyData, setFacultyData] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const facultyData: Teacher[] = [
-    {
-      nameEn: "Prayag Raj Upadhyaya",
-      nameNp: "प्रयाग राज उपाध्याय",
-      designationEn: "Principal & Senior Lecturer",
-      designationNp: "प्रधानाध्यापक तथा वरिष्ठ उपप्राध्यापक",
-      department: "Admin",
-      subjectEn: "Administration / Political Science",
-      subjectNp: "प्रशासन / राजनीति शास्त्र",
-      qualificationsEn: "M.Ed. in Educational Leadership & MA",
-      qualificationsNp: "एम.एड. (शैक्षिक नेतृत्व) तथा एम.ए.",
-      initials: "PRU"
-    },
-    {
-      nameEn: "Bhesh Raj Joshi",
-      nameNp: "भेष राज जोशी",
-      designationEn: "Vice Principal & Coordinator",
-      designationNp: "सहायक प्रधानाध्यापक तथा संयोजक",
-      department: "Admin",
-      subjectEn: "Mathematics",
-      subjectNp: "अनिवार्य गणित",
-      qualificationsEn: "M.Sc. in Pure Mathematics",
-      qualificationsNp: "एम.एस्सी. (गणितशास्त्र)",
-      initials: "BRJ"
-    },
-    {
-      nameEn: "Khem Raj Bhandari",
-      nameNp: "खेम राज भण्डारी",
-      designationEn: "Senior Science Teacher",
-      designationNp: "वरिष्ठ विज्ञान शिक्षक",
-      department: "Science",
-      subjectEn: "Physics & Chemistry",
-      subjectNp: "भौतिक विज्ञान तथा रसायनशास्त्र",
-      qualificationsEn: "M.Sc. in Physics",
-      qualificationsNp: "एम.एस्सी. (भौतिक शास्त्र)",
-      initials: "KRB"
-    },
-    {
-      nameEn: "Devi Kumari Dahal",
-      nameNp: "देवी कुमारी दाहाल",
-      designationEn: "Lecturer of English",
-      designationNp: "अंग्रेजी उपप्राध्यापक",
-      department: "Arts",
-      subjectEn: "English Literature",
-      subjectNp: "अंग्रेजी साहित्य / व्याकरण",
-      qualificationsEn: "M.Ed. in ELT",
-      qualificationsNp: "एम.एड. (अंग्रेजी शिक्षण)",
-      initials: "DKD"
-    },
-    {
-      nameEn: "Hari Prasad Lekhak",
-      nameNp: "हरि प्रसाद लेखक",
-      designationEn: "Lecturer of Economics",
-      designationNp: "अर्थशास्त्र उपप्राध्यापक",
-      department: "Commerce",
-      subjectEn: "Micro/Macro Economics",
-      subjectNp: "अर्थशास्त्र",
-      qualificationsEn: "M.A. in Economics",
-      qualificationsNp: "एम.ए. (अर्थशास्त्र)",
-      initials: "HPL"
-    },
-    {
-      nameEn: "Ganesh Dutt Bhatta",
-      nameNp: "गणेश दत्त भट्ट",
-      designationEn: "Computer Science Instructor",
-      designationNp: "कम्प्युटर शिक्षक",
-      department: "Science",
-      subjectEn: "Computer & Cyber Tech",
-      subjectNp: "कम्प्युटर विज्ञान",
-      qualificationsEn: "B.E. in Computer Engineering",
-      qualificationsNp: "बी.ई. (कम्प्युटर इन्जिनियरिङ)",
-      initials: "GDB"
-    },
-    {
-      nameEn: "Radha Kumari Rana",
-      nameNp: "राधा कुमारी राना",
-      designationEn: "Senior Nepali Teacher",
-      designationNp: "वरिष्ठ नेपाली शिक्षिका",
-      department: "Arts",
-      subjectEn: "Nepali Grammar & Literature",
-      subjectNp: "नेपाली व्याकरण तथा साहित्य",
-      qualificationsEn: "M.A. in Nepali Literature",
-      qualificationsNp: "एम.ए. (नेपाली)",
-      initials: "RKR"
-    },
-    {
-      nameEn: "Janak Bahadur Singh",
-      nameNp: "जनक बहादुर सिंह",
-      designationEn: "Accountancy Instructor",
-      designationNp: "लेखा शिक्षक",
-      department: "Commerce",
-      subjectEn: "Principles of Accountancy",
-      subjectNp: "लेखा विधि",
-      qualificationsEn: "M.B.S. in Finance",
-      qualificationsNp: "एम.बी.एस. (वित्तीय लेखा)",
-      initials: "JBS"
+  useEffect(() => {
+    async function fetchFaculty() {
+      try {
+        const res = await fetch('/api/staff');
+        if (res.ok) {
+          const json = await res.json();
+          const data = json.data || [];
+          // Map database fields to component interface
+          const mappedData: Teacher[] = data.map((staff: any) => ({
+            nameEn: staff.name_en,
+            nameNp: staff.name_np,
+            designationEn: staff.role_en,
+            designationNp: staff.role_np,
+            department: staff.department === 'administration' ? 'Admin' : staff.department === 'science' ? 'Science' : staff.department === 'arts' ? 'Arts' : 'Commerce',
+            subjectEn: staff.department,
+            subjectNp: staff.department,
+            qualificationsEn: staff.qualification,
+            qualificationsNp: staff.qualification,
+            initials: staff.name_en.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 3)
+          }));
+          setFacultyData(mappedData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch faculty:', error);
+      } finally {
+        setLoading(false);
+      }
     }
-  ];
+    fetchFaculty();
+  }, []);
 
   // Filtering list
   const filteredFaculty = facultyData.filter((t) => {
@@ -173,7 +107,16 @@ export default function Faculty() {
 
       {/* Faculty Cards Grid */}
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {filteredFaculty.map((teacher, idx) => (
+        {loading ? (
+          <div className="col-span-full text-center py-12 text-[#444444]/60">
+            Loading faculty data...
+          </div>
+        ) : filteredFaculty.length === 0 ? (
+          <div className="col-span-full text-center py-12 text-[#444444]/60">
+            No faculty members found.
+          </div>
+        ) : (
+          filteredFaculty.map((teacher, idx) => (
           <div
             key={idx}
             className="bg-white border border-[#c9a227]/30 rounded-lg p-5 flex flex-col justify-between shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden parchment-glow"
@@ -223,7 +166,7 @@ export default function Faculty() {
               {t("Verified Educator", "प्रमाणित शिक्षक")}
             </div>
           </div>
-        ))}
+        )))}
       </div>
 
       <DhakaDivider />
