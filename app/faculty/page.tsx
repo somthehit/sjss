@@ -28,8 +28,10 @@ export default function Faculty() {
     async function fetchFaculty() {
       try {
         const res = await fetch('/api/staff');
-        if (res.ok) {
-          const json = await res.json();
+        const json = await res.json();
+        console.log('API Response:', json);
+        
+        if (json.success && json.data) {
           const data = json.data || [];
           // Map database fields to component interface
           const mappedData: Teacher[] = data.map((staff: any) => ({
@@ -45,6 +47,8 @@ export default function Faculty() {
             initials: staff.name_en.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 3)
           }));
           setFacultyData(mappedData);
+        } else {
+          console.error('API returned error:', json.error);
         }
       } catch (error) {
         console.error('Failed to fetch faculty:', error);
