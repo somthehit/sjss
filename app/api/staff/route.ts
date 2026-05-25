@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
     
     return NextResponse.json({ success: true, data }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ success: false, error: 'Failed to create staff' }, { status: 500 });
   }
 }
