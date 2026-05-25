@@ -229,31 +229,16 @@ export default function Contact() {
           {t("Our Physical Location in Punarbas", "भौगोलिक अवस्थिति नक्सा")}
         </h3>
         
-        {/* Breathtaking Map SVG Layout showing Sitabasti and school marker */}
-        <div className="w-full h-80 rounded border border-[#c9a227]/25 bg-gradient-to-br from-green-50 to-amber-50/20 relative flex items-center justify-center p-8 select-none">
-          <svg className="absolute inset-0 w-full h-full text-green-200/50" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
-            {/* Roads */}
-            <path d="M0 20 L50 20 L100 50" stroke="#f0d5a3" strokeWidth="2" />
-            <path d="M40 0 L40 100" stroke="#f0d5a3" strokeWidth="2" />
-            <path d="M0 80 L100 80" stroke="#f0d5a3" strokeWidth="1.5" />
-            {/* River */}
-            <path d="M0 5 C30 5, 50 45, 100 45" stroke="#bae1ff" strokeWidth="6" />
-          </svg>
-          
-          <div className="z-10 flex flex-col items-center">
-            <div className="p-4 bg-[#8b1a1a] border-2 border-[#c9a227] rounded-full text-white shadow-lg animate-bounce">
-              <MapPin className="w-8 h-8 text-[#c9a227]" />
-            </div>
-            <div className="mt-4 p-3 bg-white border border-[#c9a227] rounded shadow-md max-w-xs parchment-glow">
-              <h4 className="font-bold text-xs text-[#1a3a2a] font-serif leading-none">Shree Jiveen Shakti Secondary School</h4>
-              <p className="text-[10px] text-[#444444]/80 mt-1">{t("Sitabasti, Kanchanpur (Punarbas-9)", "सिताबस्ती, कञ्चनपुर (पुनर्वास वडा नं. ९)")}</p>
-            </div>
-          </div>
-
-          {/* Interactive Info Marker */}
-          <div className="absolute bottom-4 right-4 bg-[#102419] text-white border border-[#c9a227] px-3 py-1.5 rounded text-[10px] font-sans">
-            <span>{t("Kanchanpur District, Sudurpaschim", "कञ्चनपुर जिल्ला, सुदूरपश्चिम प्रदेश")}</span>
-          </div>
+        <div className="w-full h-96 rounded-lg overflow-hidden border border-[#c9a227]/25 shadow-sm">
+          <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1751.660569358745!2d80.51146242740829!3d28.590141268763027!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39a1e968f2e3e3e9%3A0x20497a0ea0ac2c32!2sJeevan%20sakti%20adharbhut%20school!5e0!3m2!1sen!2snp!4v1779722784465!5m2!1sen!2snp" 
+            width="100%" 
+            height="100%" 
+            style={{ border: 0 }} 
+            allowFullScreen={true} 
+            loading="lazy" 
+            referrerPolicy="no-referrer-when-downgrade"
+          />
         </div>
       </section>
     </div>

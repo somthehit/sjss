@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Notice, HeroSlide } from '@/lib/schema';
 
 import HeroSlider from '@/components/HeroSlider';
+import BSCalendar from '@/components/BSCalendar';
 
 export const metadata: Metadata = {
   title: 'Shree Jiveen Shakti Secondary School | Kanchanpur, Nepal',
@@ -46,6 +47,18 @@ async function getSiteSettings(): Promise<Record<string, string>> {
   }
 }
 
+async function getEvents(): Promise<any[]> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ? `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}` : 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/events`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data || [];
+  } catch {
+    return [];
+  }
+}
+
 const stats = [
   { value: '847+', label_en: 'Students', label_np: 'विद्यार्थीहरू' },
   { value: '42', label_en: 'Staff Members', label_np: 'शिक्षक/कर्मचारी' },
@@ -77,6 +90,14 @@ export default async function HomePage() {
   const notices = await getLatestNotices();
   const heroSlides = await getActiveHeroSlides();
   const siteSettings = await getSiteSettings();
+  const events = await getEvents();
+
+  const displayEvents = events.length > 0 ? events.map(e => ({
+    date_bs: e.date_bs,
+    date_en: new Date(e.date_en).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+    event_en: e.title_en,
+    event_np: e.title_np
+  })) : upcomingEvents;
 
   return (
     <div className="min-h-screen" style={{ background: '#fdf6e3' }}>
@@ -267,7 +288,7 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {upcomingEvents.map((ev, i) => (
+            {displayEvents.map((ev, i) => (
               <div key={i} className="p-5 rounded-xl transition-all hover:shadow-md" style={{ background: 'white', border: '1px solid rgba(26,58,42,0.1)' }}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: '#1a3a2a' }}>
@@ -282,6 +303,10 @@ export default async function HomePage() {
                 <p className="text-xs mt-0.5 nepali-text" style={{ color: '#666' }}>{ev.event_np}</p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-12">
+            <BSCalendar />
           </div>
         </section>
 

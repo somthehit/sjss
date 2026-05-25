@@ -16,6 +16,7 @@ interface Teacher {
   qualificationsEn: string;
   qualificationsNp: string;
   initials: string;
+  photoUrl: string | null;
 }
 
 export default function Faculty() {
@@ -44,7 +45,8 @@ export default function Faculty() {
             subjectNp: staff.department,
             qualificationsEn: staff.qualification,
             qualificationsNp: staff.qualification,
-            initials: staff.name_en.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 3)
+            initials: staff.name_en.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 3),
+            photoUrl: staff.photo_url || null,
           }));
           setFacultyData(mappedData);
         } else {
@@ -131,9 +133,17 @@ export default function Faculty() {
             </div>
 
             <div className="flex flex-col">
-              {/* Profile Image Representation using Monogram initials */}
-              <div className="w-16 h-16 rounded-full border-2 border-[#c9a227] bg-[#1a3a2a] text-white flex items-center justify-center font-serif text-lg font-bold shadow-md mb-4 shrink-0">
-                {teacher.initials}
+              {/* Avatar: real photo if available, otherwise monogram initials */}
+              <div className="w-16 h-16 rounded-full border-2 border-[#c9a227] shadow-md mb-4 shrink-0 overflow-hidden bg-[#1a3a2a] flex items-center justify-center">
+                {teacher.photoUrl ? (
+                  <img
+                    src={teacher.photoUrl}
+                    alt={teacher.nameEn}
+                    className="w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  <span className="text-white font-serif text-lg font-bold">{teacher.initials}</span>
+                )}
               </div>
 
               {/* Teacher Info */}

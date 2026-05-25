@@ -49,12 +49,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    const url = new URL(req.url);
+    const imageId = url.searchParams.get('imageId');
+
+    if (imageId) {
+      await db.delete(gallery_images).where(eq(gallery_images.id, parseInt(imageId)));
+      return NextResponse.json({ success: true, message: 'Image deleted' });
+    }
+
     await db.delete(albums).where(eq(albums.id, parseInt(id)));
     return NextResponse.json({ success: true, message: 'Deleted' });
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to delete album' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to delete' }, { status: 500 });
   }
 }

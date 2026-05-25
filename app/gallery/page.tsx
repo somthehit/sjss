@@ -222,15 +222,22 @@ export default function Gallery() {
           </button>
 
           {/* Core Graphic Representation Slide */}
-          <div className="max-w-3xl w-full aspect-[4/3] max-h-[70vh] bg-gradient-to-br from-[#102419] to-[#1a3a2a] rounded-lg border-2 border-[#c9a227] flex flex-col items-center justify-center p-8 relative shadow-2xl">
-            <span className="text-xs text-[#c9a227] font-semibold uppercase tracking-widest font-sans mb-3">
-              {t(activeAlbumMeta?.title_en || '', activeAlbumMeta?.title_np || '')}
-            </span>
-            <div className="h-[1.5px] bg-[#c9a227] w-32 my-2" />
-            <h2 className="font-serif font-extrabold text-[#c9a227] text-3xl md:text-4xl text-center leading-snug tracking-wider">
-              {albumPhotos[lightboxIndex]?.caption_en || albumPhotos[lightboxIndex]?.caption_np || ''}
-            </h2>
-            <div className="absolute bottom-4 left-6 text-white/60 font-sans text-xs">
+          <div className="max-w-3xl w-full aspect-[4/3] max-h-[70vh] bg-gradient-to-br from-[#102419] to-[#1a3a2a] rounded-lg border-2 border-[#c9a227] flex flex-col items-center justify-center relative shadow-2xl overflow-hidden">
+            {albumPhotos[lightboxIndex]?.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={albumPhotos[lightboxIndex].url} alt={albumPhotos[lightboxIndex].caption_en || ''} className="w-full h-full object-contain" />
+            ) : (
+              <div className="p-8 flex flex-col items-center justify-center">
+                <span className="text-xs text-[#c9a227] font-semibold uppercase tracking-widest font-sans mb-3">
+                  {t(activeAlbumMeta?.title_en || '', activeAlbumMeta?.title_np || '')}
+                </span>
+                <div className="h-[1.5px] bg-[#c9a227] w-32 my-2" />
+                <h2 className="font-serif font-extrabold text-[#c9a227] text-3xl md:text-4xl text-center leading-snug tracking-wider">
+                  {albumPhotos[lightboxIndex]?.caption_en || albumPhotos[lightboxIndex]?.caption_np || ''}
+                </h2>
+              </div>
+            )}
+            <div className="absolute bottom-4 left-6 text-white/60 bg-black/40 px-2 py-1 rounded font-sans text-xs">
               {lightboxIndex + 1} / {albumPhotos.length}
             </div>
           </div>

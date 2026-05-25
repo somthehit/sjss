@@ -25,6 +25,19 @@ export const hero_slides = pgTable('hero_slides', {
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ─── Events / Calendar ───────────────────────────────────────────────────────
+export const events = pgTable('events', {
+  id: serial('id').primaryKey(),
+  title_en: text('title_en').notNull(),
+  title_np: text('title_np').notNull(),
+  date_bs: varchar('date_bs', { length: 50 }).notNull(),
+  date_en: varchar('date_en', { length: 50 }).notNull(),
+  description_en: text('description_en'),
+  description_np: text('description_np'),
+  display_order: integer('display_order').notNull().default(0),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── Gallery Albums ──────────────────────────────────────────────────────────
 export const albums = pgTable('albums', {
   id: serial('id').primaryKey(),
@@ -113,6 +126,15 @@ export const admin_users = pgTable('admin_users', {
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ─── Calendar Wall Chart ──────────────────────────────────────────────────────
+export const calendar_data = pgTable('calendar_data', {
+  id: serial('id').primaryKey(),
+  month_name: varchar('month_name', { length: 30 }).notNull(),
+  month_index: integer('month_index').notNull(),
+  days: jsonb('days').notNull().default('[]'),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── Types (inferred) ────────────────────────────────────────────────────────
 export type Notice = typeof notices.$inferSelect;
 export type NewNotice = typeof notices.$inferInsert;
@@ -125,3 +147,6 @@ export type Result = typeof results.$inferSelect;
 export type SiteSetting = typeof site_settings.$inferSelect;
 export type HeroSlide = typeof hero_slides.$inferSelect;
 export type NewHeroSlide = typeof hero_slides.$inferInsert;
+export type Event = typeof events.$inferSelect;
+export type NewEvent = typeof events.$inferInsert;
+export type CalendarMonth = typeof calendar_data.$inferSelect;

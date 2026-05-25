@@ -36,8 +36,9 @@ import {
 import { toNepaliNumerals } from "@/lib/dateConverter";
 import FacultyManager from "@/components/admin/FacultyManager";
 import GalleryManager from "@/components/admin/GalleryManager";
+import EventManager from "@/components/admin/EventManager";
 
-type Tab = "overview" | "notices" | "admissions" | "results" | "settings" | "hero" | "faculty" | "gallery";
+type Tab = "overview" | "notices" | "admissions" | "results" | "settings" | "hero" | "faculty" | "gallery" | "events";
 
 interface Notice {
   id: string;
@@ -739,6 +740,18 @@ export default function AdminDashboard() {
           >
             <ImageIcon className="w-4 h-4 shrink-0" />
             <span>Photo Gallery</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("events")}
+            className={`w-full p-3.5 rounded flex items-center gap-3 cursor-pointer transition-all ${
+              activeTab === "events"
+                ? "bg-[#c9a227]/20 text-[#c9a227] border-l-4 border-[#c9a227]"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <Calendar className="w-4 h-4 shrink-0" />
+            <span>Events & Calendar</span>
           </button>
 
           <button
@@ -1640,6 +1653,7 @@ export default function AdminDashboard() {
 
         {activeTab === "faculty" && <FacultyManager />}
         {activeTab === "gallery" && <GalleryManager />}
+        {activeTab === "events" && <EventManager />}
 
       </main>
     </div>
