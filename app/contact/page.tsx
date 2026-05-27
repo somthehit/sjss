@@ -35,15 +35,38 @@ export default function Contact() {
     return activeErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const activeErrors = validate();
     if (Object.keys(activeErrors).length > 0) {
       setErrors(activeErrors);
-    } else {
-      setErrors({});
-      setIsSubmitted(true);
-      setFormData({ name: "", email: "", phone: "", message: "" });
+      return;
+    }
+    
+    setErrors({});
+    setIsSubmitting(true);
+    
+    try {
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      
+      if (res.ok) {
+        setIsSubmitted(true);
+        setFormData({ name: "", email: "", phone: "", message: "" });
+      } else {
+        const data = await res.json();
+        alert(t("Failed to submit message: ", "सन्देश पठाउन असफल: ") + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(t("An error occurred. Please try again.", "त्रुटि भयो। कृपया फेरि प्रयास गर्नुहोस्।"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -211,10 +234,15 @@ export default function Contact() {
               {/* Submit */}
               <button
                 type="submit"
-                className="mt-2 w-full py-3 bg-[#1a3a2a] text-white border border-[#c9a227] font-semibold uppercase tracking-wider rounded cursor-pointer hover:bg-[#102419] flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="mt-2 w-full py-3 bg-[#1a3a2a] text-white border border-[#c9a227] font-semibold uppercase tracking-wider rounded cursor-pointer hover:bg-[#102419] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4 text-[#c9a227]" />
-                <span>{t("Submit Inquiry", "सन्देश पठाउनुहोस्")}</span>
+                <span>
+                  {isSubmitting
+                    ? t("Submitting...", "पठाउँदैछ...")
+                    : t("Submit Inquiry", "सन्देश पठाउनुहोस्")}
+                </span>
               </button>
             </form>
           )}

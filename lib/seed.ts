@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { notices, albums, gallery_images, staff, results, site_settings, admin_users } from '@/lib/schema';
+import { notices, albums, gallery_images, staff, results, site_settings, admin_users, milestones } from '@/lib/schema';
 import bcrypt from 'bcrypt';
 
 export async function seedDatabase() {
@@ -20,10 +20,26 @@ export async function seedDatabase() {
   await db.insert(site_settings).values([
     { key: 'school_motto_en', value: 'Knowledge, Character, Service' },
     { key: 'school_motto_np', value: 'ज्ञान, चरित्र, सेवा' },
-    { key: 'principal_message_en', value: 'Welcome to Shree Jiveen Shakti Secondary School. Our mission is to nurture young minds with quality education rooted in Nepali values and global perspectives. We believe every child has immense potential, and our dedicated faculty strives to help each student realize their full capabilities.' },
-    { key: 'principal_message_np', value: 'श्री जीवन शक्ति माध्यमिक विद्यालयमा स्वागत छ। हाम्रो लक्ष्य नेपाली मूल्य र वैश्विक दृष्टिकोणमा आधारित गुणस्तरीय शिक्षाद्वारा युवा मनहरूलाई पोषण दिनु हो।' },
+    { key: 'principal_message_en', value: `Dear Students, Parents, Guardians, and Well-wishers,
+
+It is my extreme privilege and honor to serve as the Principal of Shree Jiveen Shakti Secondary School, Sitabasti, Kanchanpur. Ever since our inception in 2037 BS, our school has undergone massive shifts from a modest rural basic school to a full-fledged government secondary educational institution supporting diverse curriculums in Science, Humanities, and Education.
+
+In alignment with the directives of the Ministry of Education, Nepal, our school has consistently achieved highly competitive results in the Secondary Education Examination (SEE). We recognize that textbook learning alone is incomplete. Hence, we prioritize an active integration of digital literacy, library exercises, physical sports, and cultural festivals which draws inspiration from our rich Nepalese identity.
+
+We are highly grateful to the local government authorities of Punarbas-9, our hard-working faculty members, and the collaborative School Management Committee (SMC) who support our operations. We welcome all parents to maintain open communicative relationships with us to ensure our pupils reach their highest academic heights.
+
+Thank you. Wishing everyone a highly productive and fulfilling academic year.` },
+    { key: 'principal_message_np', value: `आदरणीय अभिभावक, शिक्षक, सरोकारवाला तथा प्यारा विद्यार्थी भाइबहिनीहरू,
+
+कञ्चनपुर जिल्लाको पुनर्वास नगरपालिकास्थित श्री जिविन शक्ति माध्यमिक विद्यालयको प्रधानाध्यापकका रूपमा यहाँहरूसँग जोडिन पाउँदा म अत्यन्तै गौरवान्वित छु। वि.सं. २०३७ सालमा सामान्य प्राथमिक पाठशालाको रूपमा स्थापना भएको यो विद्यालय आज क्षेत्रकै उत्कृष्ट सामुदायिक माध्यमिक विद्यालय बन्न सफल भएको छ।
+
+नेपाल सरकारको राष्ट्रिय शिक्षा प्रणाली अनुरूप हामीले माध्यमिक शिक्षा परीक्षा (SEE) मा निरन्तर उत्कृष्ट नतिजा हासिल गर्दै आएका छौँ। हामी केवल परीक्षा उत्तीर्ण गर्ने शैक्षिक कारखाना होइनौँ, अपितु विद्यार्थीमा अन्तरनिहित प्रतिभा प्रस्फुटन गरी देश र समाजप्रति जिम्मेवार नागरिक उत्पादन गर्न समर्पित छौँ।
+
+हामी पुनर्वास नगरपालिका, विद्यालय व्यवस्थापन समिति, शिक्षक अभिभावक संघ, लगनशील शिक्षक-कर्मचारी र सहयोगी हातहरू प्रति हार्दिक आभार प्रकट गर्दछौँ। यहाँहरूको साथ र सहयोग नै हाम्रो उत्प्रेरणाको स्रोत हो। आगामी दिनहरूमा पनि यस्तै सहकार्य र शुभेच्छाको अपेक्षा गर्दछौँ।
+
+धन्यवाद। यहाँहरू सबैको शैक्षिक यात्रा सुखद र सफल रहोस्।` },
     { key: 'announcement_text_en', value: 'Admission Open for Academic Year 2081 BS | SEE Results Published | Annual Sports Day on Ashad 15' },
-    { key: 'announcement_text_np', value: 'शैक्षिक वर्ष २०८१ को लागि भर्ना खुला | SEE नतिजा प्रकाशित | वार्षिक खेलकुद दिवस असार १५ मा' },
+    { key: 'announcement_text_np', value: 'शैक्षिक वर्ष २०८२ को लागि भर्ना खुला | SEE नतिजा प्रकाशित | वार्षिक खेलकुद दिवस असार १५ मा' },
     { key: 'total_students', value: '847' },
     { key: 'total_staff', value: '42' },
     { key: 'established_year_bs', value: '2037' },
@@ -72,6 +88,64 @@ export async function seedDatabase() {
       content_en: 'The school will remain closed from Ashwin 28 to Kartik 5, 2081 for the Dashain festival. Classes will resume from Kartik 6.',
       content_np: 'दशैँ चाडपर्वको अवसरमा विद्यालय असोज २८ देखि कार्तिक ५, २०८१ सम्म बन्द रहनेछ। कार्तिक ६ देखि कक्षा सुरु हुनेछन्।',
       category: 'holiday',
+    },
+  ]).onConflictDoNothing();
+
+  // Seed milestones
+  await db.insert(milestones).values([
+    {
+      title_en: 'School Establishment',
+      title_np: 'विद्यालय स्थापना',
+      date_label: '२०३७',
+      year_ad: '1980',
+      description_en: 'Shree Jiveen Shakti Secondary School was established in Punarbas-9, Sitabasti, Kanchanpur with the mission of providing quality education to the local community.',
+      description_np: 'श्री जीवन शक्ति माध्यमिक विद्यालय पुनर्वास-९, सिताबस्ती, कञ्चनपुरमा स्थानीय समुदायलाई गुणस्तरीय शिक्षा प्रदान गर्ने उद्देश्यले स्थापित भएको थियो।',
+      display_order: 1,
+    },
+    {
+      title_en: 'Secondary Level Approval',
+      title_np: 'माध्यमिक तह स्वीकृति',
+      date_label: '२०४५',
+      year_ad: '1988',
+      description_en: 'The school received official approval to operate secondary level education (Grades 9-10), enabling students to pursue SEE examinations.',
+      description_np: 'विद्यालयले माध्यमिक तह (कक्षा ९-१०) सञ्चालन गर्न आधिकारिक स्वीकृति प्राप्त गर्यो, जसले विद्यार्थीहरूलाई SEE परीक्षा दिन सक्षम बनायो।',
+      display_order: 2,
+    },
+    {
+      title_en: 'Higher Secondary Program Launch',
+      title_np: 'उच्च माध्यमिक कार्यक्रम सुरुवात',
+      date_label: '२०५५',
+      year_ad: '1998',
+      description_en: 'Introduced higher secondary education (Grades 11-12) with streams in Science, Management, and Humanities to meet diverse student interests.',
+      description_np: 'विविध विद्यार्थी रुचिहरू पूरा गर्न विज्ञान, व्यवस्थापन र मानविकी संकायहरू सहित उच्च माध्यमिक शिक्षा (कक्षा ११-१२) सुरु गरियो।',
+      display_order: 3,
+    },
+    {
+      title_en: 'Computer Lab Establishment',
+      title_np: 'कम्प्युटर प्रयोगशाला स्थापना',
+      date_label: '२०६२',
+      year_ad: '2005',
+      description_en: 'Established a fully-equipped computer laboratory with internet connectivity, introducing ICT education to students from Grade 4 onwards.',
+      description_np: 'इन्टरनेट जडान सहितको पूर्ण सुविधायुक्त कम्प्युटर प्रयोगशाला स्थापना गरियो, जसले कक्षा ४ बाट विद्यार्थीलाई ICT शिक्षा प्रदान गर्यो।',
+      display_order: 4,
+    },
+    {
+      title_en: 'Science Lab Modernization',
+      title_np: 'विज्ञान प्रयोगशाला आधुनिकीकरण',
+      date_label: '२०७२',
+      year_ad: '2015',
+      description_en: 'Modernized science laboratories with state-of-the-art equipment for Physics, Chemistry, Biology, and Environmental Science practical learning.',
+      description_np: 'भौतिक विज्ञान, रसायन विज्ञान, जीव विज्ञान र वातावरणीय विज्ञान प्रयोगात्मक शिक्षाको लागि अत्याधुनिक उपकरणहरू सहित विज्ञान प्रयोगशालाहरूको आधुनिकीकरण गरियो।',
+      display_order: 5,
+    },
+    {
+      title_en: 'Digital Records & Online Platform Launch',
+      title_np: 'डिजिटल रेकर्ड र अनलाइन प्लेटफर्म सुरुवात',
+      date_label: '२०८१',
+      year_ad: '2024',
+      description_en: 'Implemented a comprehensive digital school management system with online results, e-notices, student records, and a public website to enhance transparency and parent engagement.',
+      description_np: 'अभिभावक संलग्नता र पारदर्शिता बढाउन अनलाइन नतिजा, ई-सूचना, विद्यार्थी रेकर्ड र सार्वजनिक वेबसाइट सहितको व्यापक डिजिटल विद्यालय व्यवस्थापन प्रणाली लागू गरियो।',
+      display_order: 6,
     },
   ]).onConflictDoNothing();
 

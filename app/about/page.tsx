@@ -1,19 +1,26 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/components/LanguageContext";
 import DhakaDivider from "@/components/DhakaDivider";
 import { Award, Compass, Heart, History, Sparkles } from "lucide-react";
 
 export default function About() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [siteSettings, setSiteSettings] = useState<any>(null);
 
-  const timelineEvents = [
-    { year: "2037 BS", yearAd: "1980 AD", titleEn: "Establishment", titleNp: "विद्यालयको स्थापना", descEn: "Shree Jiveen Shakti Secondary School was established as a primary school by the local community in Punarbas to provide basic education.", descNp: "पुनर्वास क्षेत्रका स्थानीय अभिभावकहरूको सक्रियता र योगदानमा प्राथमिक तहको पठनपाठन सुरु गर्ने गरी विद्यालयको स्थापना भयो।" },
-    { year: "2052 BS", yearAd: "1995 AD", titleEn: "Lower Secondary Upgrade", titleNp: "निम्न माध्यमिक तहमा स्तरोन्नति", descEn: "The school was officially upgraded to a lower secondary school (Grades 6-8) with financial support from the Nepalese government.", descNp: "नेपाल सरकारबाट आधिकारिक सम्बन्धन प्राप्त गरी कक्षा ६ देखि ८ सम्म निम्न माध्यमिक तहको पठनपाठन विस्तार गरियो।" },
-    { year: "2065 BS", yearAd: "2008 AD", titleEn: "Secondary Level (Grades 9-10) Setup", titleNp: "माध्यमिक तह (कक्षा ९-१०) सञ्चालन", descEn: "Secondary school classes were registered and the first batch of students participated in the School Leaving Certificate (SLC) exams.", descNp: "कक्षा ९ र १० को स्वीकृतिका साथ माध्यमिक तहको औपचारिक कक्षा विस्तार भयो र पहिलो ब्याचका विद्यार्थीहरू एस.एल.सी. परीक्षामा सहभागी भए।" },
-    { year: "2076 BS", yearAd: "2019 AD", titleEn: "Higher Secondary (Grade 11-12) Streams", titleNp: "उच्च माध्यमिक (कक्षा ११-१२) सम्बन्धन", descEn: "Streams in Management and Education (Grades 11 and 12) were inaugurated to support advanced regional learning, reducing student migration.", descNp: "स्थानीय स्तरमै उच्च शिक्षाको पहूँच सुनिश्चित गर्न कक्षा ११ र १२ को अनुमति प्राप्त गरी व्यवस्थापन र शिक्षा संकायको सुरुवात गरियो।" }
-  ];
+  useEffect(() => {
+    fetch('/api/milestones')
+      .then(res => res.ok ? res.json() : { data: [] })
+      .then(json => setMilestones(json.data || []))
+      .catch(() => {});
+
+    fetch('/api/settings')
+      .then(res => res.ok ? res.json() : { data: null })
+      .then(json => setSiteSettings(json.data || null))
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col py-10 px-6 max-w-5xl mx-auto w-full">
@@ -98,24 +105,27 @@ export default function About() {
           {t("Our Historical Milestones", "ऐतिहासिक विकासक्रम")}
         </h2>
         <div className="relative border-l-2 border-[#c9a227]/40 pl-6 md:pl-10 ml-4 max-w-4xl mx-auto flex flex-col gap-8">
-          {timelineEvents.map((evt, idx) => (
-            <div key={idx} className="relative flex flex-col bg-white border border-[#c9a227]/10 p-5 rounded shadow-sm hover:shadow-md transition-shadow">
-              {/* Bullet Node */}
-              <div className="absolute -left-[35px] md:-left-[51px] top-5 w-6 h-6 rounded-full bg-[#1a3a2a] border-2 border-[#c9a227] flex items-center justify-center text-[10px] text-[#c9a227] font-bold shadow-md">
-                ✓
+          {milestones.length === 0 ? (
+            <p className="text-sm text-slate-400 italic">{t('No milestones added yet.', 'कुनै विकासक्रम थपिएको छैन।')}</p>
+          ) : (
+            milestones.filter(m => m.is_active).map((m) => (
+              <div key={m.id} className="relative flex flex-col bg-white border border-[#c9a227]/10 p-5 rounded shadow-sm hover:shadow-md transition-shadow">
+                <div className="absolute -left-[35px] md:-left-[51px] top-5 w-6 h-6 rounded-full bg-[#1a3a2a] border-2 border-[#c9a227] flex items-center justify-center text-[10px] text-[#c9a227] font-bold shadow-md">
+                  ✓
+                </div>
+                
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#c9a227]/20 pb-2">
+                  <span className="text-base font-bold text-[#1a3a2a] font-serif">{t(m.title_en, m.title_np)}</span>
+                  <span className="px-3 py-0.5 bg-[#8b1a1a]/10 text-[#8b1a1a] text-xs font-bold rounded-full font-serif border border-[#8b1a1a]/20">
+                    {m.date_label}{m.year_ad ? ` (${m.year_ad})` : ''}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-[#444444] leading-relaxed mt-2.5 font-sans">
+                  {t(m.description_en, m.description_np)}
+                </p>
               </div>
-              
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#c9a227]/20 pb-2">
-                <span className="text-base font-bold text-[#1a3a2a] font-serif">{t(evt.titleEn, evt.titleNp)}</span>
-                <span className="px-3 py-0.5 bg-[#8b1a1a]/10 text-[#8b1a1a] text-xs font-bold rounded-full font-serif border border-[#8b1a1a]/20">
-                  {evt.year} ({evt.yearAd})
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-[#444444] leading-relaxed mt-2.5 font-sans">
-                {t(evt.descEn, evt.descNp)}
-              </p>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
@@ -134,33 +144,41 @@ export default function About() {
           </h2>
           
           <div className="text-sm md:text-base text-[#444444] leading-relaxed mt-6 space-y-4 font-serif text-justify">
-            <p>
-              {t(
-                "Dear Students, Parents, Guardians, and Well-wishers,",
-                "आदरणीय अभिभावक, शिक्षक, सरोकारवाला तथा प्यारा विद्यार्थी भाइबहिनीहरू,"
-              )}
-            </p>
-            <p>
-              {t(
-                "It is my extreme privilege and honor to serve as the Principal of Shree Jiveen Shakti Secondary School, Sitabasti, Kanchanpur. Ever since our inception in 2037 BS, our school has undergone massive shifts from a modest rural basic school to a full-fledged government secondary educational institution supporting diverse curriculums in Science, Humanities, and Education.",
-                "कञ्चनपुर जिल्लाको पुनर्वास नगरपालिकास्थित श्री जिविन शक्ति माध्यमिक विद्यालयको प्रधानाध्यापकका रूपमा यहाँहरूसँग जोडिन पाउँदा म अत्यन्तै गौरवान्वित छु। वि.सं. २०३७ सालमा सामान्य प्राथमिक पाठशालाको रूपमा स्थापना भएको यो विद्यालय आज क्षेत्रकै उत्कृष्ट सामुदायिक माध्यमिक विद्यालय बन्न सफल भएको छ।"
-              )}
-            </p>
-            <p>
-              {t(
-                "In alignment with the directives of the Ministry of Education, Nepal, our school has consistently achieved highly competitive results in the Secondary Education Examination (SEE). We recognize that textbook learning alone is incomplete. Hence, we prioritize an active integration of digital literacy, library exercises, physical sports, and cultural festivals which draws inspiration from our rich Nepalese identity.",
-                "नेपाल सरकारको राष्ट्रिय शिक्षा प्रणाली अनुरूप हामीले माध्यमिक शिक्षा परीक्षा (SEE) मा निरन्तर उत्कृष्ट नतिजा हासिल गर्दै आएका छौँ। हामी केवल परीक्षा उत्तीर्ण गर्ने शैक्षिक कारखाना होइनौँ, अपितु विद्यार्थीमा अन्तरनिहित प्रतिभा प्रस्फुटन गरी देश र समाजप्रति जिम्मेवार नागरिक उत्पादन गर्न समर्पित छौँ।"
-              )}
-            </p>
-            <p>
-              {t(
-                "We are highly grateful to the local government authorities of Punarbas-9, our hard-working faculty members, and the collaborative School Management Committee (SMC) who support our operations. We welcome all parents to maintain open communicative relationships with us to ensure our pupils reach their highest academic heights.",
-                "हामी पुनर्वास नगरपालिका, विद्यालय व्यवस्थापन समिति, शिक्षक अभिभावक संघ, लगनशील शिक्षक-कर्मचारी र सहयोगी हातहरू प्रति हार्दिक आभार प्रकट गर्दछौँ। यहाँहरूको साथ र सहयोग नै हाम्रो उत्प्रेरणाको स्रोत हो। आगामी दिनहरूमा पनि यस्तै सहकार्य र शुभेच्छाको अपेक्षा गर्दछौँ।"
-              )}
-            </p>
-            <p className="pt-2">
-              {t("Thank you. Wishing everyone a highly productive and fulfilling academic year.", "धन्यवाद। यहाँहरू सबैको शैक्षिक यात्रा सुखद र सफल रहोस्।")}
-            </p>
+            {siteSettings?.principal_message_en ? (
+              language === 'en' 
+                ? siteSettings.principal_message_en.split('\n').map((para, i) => <p key={i}>{para}</p>)
+                : siteSettings.principal_message_np?.split('\n').map((para, i) => <p key={i}>{para}</p>)
+            ) : (
+              <>
+                <p>
+                  {t(
+                    "Dear Students, Parents, Guardians, and Well-wishers,",
+                    "आदरणीय अभिभावक, शिक्षक, सरोकारवाला तथा प्यारा विद्यार्थी भाइबहिनीहरू,"
+                  )}
+                </p>
+                <p>
+                  {t(
+                    "It is my extreme privilege and honor to serve as the Principal of Shree Jiveen Shakti Secondary School, Sitabasti, Kanchanpur. Ever since our inception in 2037 BS, our school has undergone massive shifts from a modest rural basic school to a full-fledged government secondary educational institution supporting diverse curriculums in Science, Humanities, and Education.",
+                    "कञ्चनपुर जिल्लाको पुनर्वास नगरपालिकास्थित श्री जिविन शक्ति माध्यमिक विद्यालयको प्रधानाध्यापकका रूपमा यहाँहरूसँग जोडिन पाउँदा म अत्यन्तै गौरवान्वित छु। वि.सं. २०३७ सालमा सामान्य प्राथमिक पाठशालाको रूपमा स्थापना भएको यो विद्यालय आज क्षेत्रकै उत्कृष्ट सामुदायिक माध्यमिक विद्यालय बन्न सफल भएको छ।"
+                  )}
+                </p>
+                <p>
+                  {t(
+                    "In alignment with the directives of the Ministry of Education, Nepal, our school has consistently achieved highly competitive results in the Secondary Education Examination (SEE). We recognize that textbook learning alone is incomplete. Hence, we prioritize an active integration of digital literacy, library exercises, physical sports, and cultural festivals which draws inspiration from our rich Nepalese identity.",
+                    "नेपाल सरकारको राष्ट्रिय शिक्षा प्रणाली अनुरूप हामीले माध्यमिक शिक्षा परीक्षा (SEE) मा निरन्तर उत्कृष्ट नतिजा हासिल गर्दै आएका छौँ। हामी केवल परीक्षा उत्तीर्ण गर्ने शैक्षिक कारखाना होइनौँ, अपितु विद्यार्थीमा अन्तरनिहित प्रतिभा प्रस्फुटन गरी देश र समाजप्रति जिम्मेवार नागरिक उत्पादन गर्न समर्पित छौँ।"
+                  )}
+                </p>
+                <p>
+                  {t(
+                    "We are highly grateful to the local government authorities of Punarbas-9, our hard-working faculty members, and the collaborative School Management Committee (SMC) who support our operations. We welcome all parents to maintain open communicative relationships with us to ensure our pupils reach their highest academic heights.",
+                    "हामी पुनर्वास नगरपालिका, विद्यालय व्यवस्थापन समिति, शिक्षक अभिभावक संघ, लगनशील शिक्षक-कर्मचारी र सहयोगी हातहरू प्रति हार्दिक आभार प्रकट गर्दछौँ। यहाँहरूको साथ र सहयोग नै हाम्रो उत्प्रेरणाको स्रोत हो। आगामी दिनहरूमा पनि यस्तै सहकार्य र शुभेच्छाको अपेक्षा गर्दछौँ।"
+                  )}
+                </p>
+                <p className="pt-2">
+                  {t("Thank you. Wishing everyone a highly productive and fulfilling academic year.", "धन्यवाद। यहाँहरू सबैको शैक्षिक यात्रा सुखद接र सफल रहोस्।")}
+                </p>
+              </>
+            )}
           </div>
 
           {/* Principal Signature Block */}

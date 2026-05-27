@@ -13,5 +13,8 @@ const pool = new Pool({
   keepAlive: true,
 });
 
-export const db = drizzle(pool, { schema });
+export const db = drizzle(pool, {
+  schema,
+  logger: false,
+});
 export type DB = typeof db;

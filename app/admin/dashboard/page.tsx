@@ -32,13 +32,18 @@ import {
   GripVertical,
   Eye,
   EyeOff,
+  Mail,
+  History,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { toNepaliNumerals } from "@/lib/dateConverter";
 import FacultyManager from "@/components/admin/FacultyManager";
 import GalleryManager from "@/components/admin/GalleryManager";
 import EventManager from "@/components/admin/EventManager";
+import MessageManager from "@/components/admin/MessageManager";
+import AcademicProgramsManager from "@/components/admin/AcademicProgramsManager";
 
-type Tab = "overview" | "notices" | "admissions" | "results" | "settings" | "hero" | "faculty" | "gallery" | "events";
+type Tab = "overview" | "notices" | "milestones" | "admissions" | "results" | "settings" | "hero" | "faculty" | "gallery" | "events" | "messages" | "academicPrograms";
 
 interface Notice {
   id: string;
@@ -124,7 +129,8 @@ export default function AdminDashboard() {
   }, [activeTab]);
   const [heroSlides, setHeroSlides] = useState<any[]>([]);
   const [heroLoading, setHeroLoading] = useState(false);
-  const [newHeroUrl, setNewHeroUrl] = useState("");
+  const [newHeroFile, setNewHeroFile] = useState<File | null>(null);
+  const [newHeroCaption, setNewHeroCaption] = useState("");
 
   const fetchHeroSlides = async () => {
     try {
@@ -150,8 +156,24 @@ export default function AdminDashboard() {
   const [siteSettings, setSiteSettings] = useState({
     mottoEn: "Lead us from darkness to the light of knowledge.",
     mottoNp: "अन्धकारबाट उज्यालोतर्फ डोर्याउनुहोस्",
-    principalMessageEn: "Welcome to Shree Jiveen Shakti Secondary School. Since our establishment in 2037 BS, we have remained committed to offering affordable, high-quality public education to students in the Sitabasti community.",
-    principalMessageNp: "श्री जिविन शक्ति माध्यमिक विद्यालयको आधिकारिक वेबसाइटमा यहाँहरूलाई हार्दिक स्वागत छ। २०३७ सालमा स्थापना भएदेखि यस भेगका बालबालिकाहरूलाई सर्वसुलभ, व्यावहारिक र गुणस्तरीय शिक्षा प्रदान गर्न हामी दृढ संकल्पित छौँ।",
+    principalMessageEn: `Dear Students, Parents, Guardians, and Well-wishers,
+
+It is my extreme privilege and honor to serve as the Principal of Shree Jiveen Shakti Secondary School, Sitabasti, Kanchanpur. Ever since our inception in 2037 BS, our school has undergone massive shifts from a modest rural basic school to a full-fledged government secondary educational institution supporting diverse curriculums in Science, Humanities, and Education.
+
+In alignment with the directives of the Ministry of Education, Nepal, our school has consistently achieved highly competitive results in the Secondary Education Examination (SEE). We recognize that textbook learning alone is incomplete. Hence, we prioritize an active integration of digital literacy, library exercises, physical sports, and cultural festivals which draws inspiration from our rich Nepalese identity.
+
+We are highly grateful to the local government authorities of Punarbas-9, our hard-working faculty members, and the collaborative School Management Committee (SMC) who support our operations. We welcome all parents to maintain open communicative relationships with us to ensure our pupils reach their highest academic heights.
+
+Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
+    principalMessageNp: `आदरणीय अभिभावक, शिक्षक, सरोकारवाला तथा प्यारा विद्यार्थी भाइबहिनीहरू,
+
+कञ्चनपुर जिल्लाको पुनर्वास नगरपालिकास्थित श्री जिविन शक्ति माध्यमिक विद्यालयको प्रधानाध्यापकका रूपमा यहाँहरूसँग जोडिन पाउँदा म अत्यन्तै गौरवान्वित छु। वि.सं. २०३७ सालमा सामान्य प्राथमिक पाठशालाको रूपमा स्थापना भएको यो विद्यालय आज क्षेत्रकै उत्कृष्ट सामुदायिक माध्यमिक विद्यालय बन्न सफल भएको छ।
+
+नेपाल सरकारको राष्ट्रिय शिक्षा प्रणाली अनुरूप हामीले माध्यमिक शिक्षा परीक्षा (SEE) मा निरन्तर उत्कृष्ट नतिजा हासिल गर्दै आएका छौँ। हामी केवल परीक्षा उत्तीर्ण गर्ने शैक्षिक कारखाना होइनौँ, अपितु विद्यार्थीमा अन्तरनिहित प्रतिभा प्रस्फुटन गरी देश र समाजप्रति जिम्मेवार नागरिक उत्पादन गर्न समर्पित छौँ।
+
+हामी पुनर्वास नगरपालिका, विद्यालय व्यवस्थापन समिति, शिक्षक अभिभावक संघ, लगनशील शिक्षक-कर्मचारी र सहयोगी हातहरू प्रति हार्दिक आभार प्रकट गर्दछौँ। यहाँहरूको साथ र सहयोग नै हाम्रो उत्प्रेरणाको स्रोत हो। आगामी दिनहरूमा पनि यस्तै सहकार्य र शुभेच्छाको अपेक्षा गर्दछौँ।
+
+धन्यवाद। यहाँहरू सबैको शैक्षिक यात्रा सुखद र सफल रहोस्।`,
     announcementTextEn: "SEE Examination Results 2081 are out! Check your scores in the Results tab. | Admissions for Academic Year 2083 are now open!",
     announcementTextNp: "एस.ई.ई. परीक्षा नतिजा २०८१ प्रकाशित भएको छ! नतिजा ट्याबमा हेर्नुहोस्। | शैक्षिक वर्ष २०८३ को लागि भर्ना खुला गरिएको छ!",
     announcementVisible: true,
@@ -164,6 +186,11 @@ export default function AdminDashboard() {
     email: "info@sjss.edu.np",
     addressEn: "Punarbas-9, Sitabasti, Kanchanpur, Nepal",
     addressNp: "पुनर्वास-९, सिताबस्ती, कञ्चनपुर, नेपाल",
+    calendar_year: "२०८३",
+    totalStudents: "847+",
+    totalStaff: "42",
+    establishedYearBS: "2037",
+    schoolClasses: "1–10",
   });
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -242,7 +269,8 @@ export default function AdminDashboard() {
 
     const localSettings = localStorage.getItem("sjss_settings");
     if (localSettings) {
-      setSiteSettings(JSON.parse(localSettings));
+      const parsed = JSON.parse(localSettings);
+      setSiteSettings((prev) => ({ ...prev, ...parsed }));
     } else {
       localStorage.setItem("sjss_settings", JSON.stringify(siteSettings));
     }
@@ -371,7 +399,8 @@ export default function AdminDashboard() {
 
 
   // --- RESULTS UPLOADER LOGIC ---
-  const [csvFileContent, setCsvFileContent] = useState("");
+  const [fileContent, setFileContent] = useState<ArrayBuffer | null>(null);
+  const [fileName, setFileName] = useState("");
   const [resultRollNo, setResultRollNo] = useState("");
   const [resultName, setResultName] = useState("");
   const [resultClass, setResultClass] = useState("10");
@@ -430,31 +459,36 @@ export default function AdminDashboard() {
     alert("Student report generated successfully!");
   };
 
-  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setFileName(file.name);
 
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      setCsvFileContent(text);
+      setFileContent(evt.target?.result as ArrayBuffer);
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   };
 
-  const processCSV = () => {
-    if (!csvFileContent) return;
+  const processSpreadsheet = () => {
+    if (!fileContent) return;
 
-    // Parse simple CSV rows: roll,name,english,nepali,math,science,social
-    const rows = csvFileContent.split("\n").slice(1);
+    const wb = XLSX.read(fileContent, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+    // Skip header row, find data rows with at least 7 columns
     const parsedResults: StudentResult[] = [];
 
-    rows.forEach((row) => {
-      const cols = row.split(",");
-      if (cols.length < 7) return;
+    for (let i = 1; i < rows.length; i++) {
+      const cols = rows[i];
+      if (!cols || cols.length < 7) continue;
 
-      const roll = cols[0].trim();
-      const name = cols[1].trim();
+      const roll = String(cols[0] ?? "").trim();
+      const name = String(cols[1] ?? "").trim();
+      if (!roll || !name) continue;
+
       const eng = parseInt(cols[2]) || 0;
       const nep = parseInt(cols[3]) || 0;
       const mat = parseInt(cols[4]) || 0;
@@ -482,12 +516,15 @@ export default function AdminDashboard() {
           { code: "105", nameEn: "Social Studies", nameNp: "सामाजिक", fullMarks: 100, passMarks: 35, marksObtained: soc, grade: "B+", remarksEn: "Passed", remarksNp: "उत्तीर्ण" }
         ]
       });
-    });
+    }
 
     if (parsedResults.length > 0) {
       saveResultsToStorage([...parsedResults, ...results]);
-      setCsvFileContent("");
-      alert(`Imported ${parsedResults.length} records from CSV successfully!`);
+      setFileContent(null);
+      setFileName("");
+      alert(`Imported ${parsedResults.length} records successfully!`);
+    } else {
+      alert("No valid data found. Check that columns are: roll, name, english, nepali, math, science, social");
     }
   };
 
@@ -512,8 +549,10 @@ export default function AdminDashboard() {
         principal_message_np: siteSettings.principalMessageNp || "",
         announcement_text_en: siteSettings.announcementTextEn || "",
         announcement_text_np: siteSettings.announcementTextNp || "",
-        // optional numeric/site info left blank unless added to form
-        // total_students, total_staff, established_year_bs can be added to payload if inputs are created in the admin UI
+        total_students: siteSettings.totalStudents || "",
+        total_staff: siteSettings.totalStaff || "",
+        established_year_bs: siteSettings.establishedYearBS || "",
+        school_classes: siteSettings.schoolClasses || "",
         phone: siteSettings.phoneEn || "",
         email: siteSettings.email || "",
         address_en: siteSettings.addressEn || "",
@@ -521,6 +560,7 @@ export default function AdminDashboard() {
         emis: siteSettings.emis || "",
         school_code: siteSettings.schoolCode || "",
         logo_url: siteSettings.logoUrl || "",
+        calendar_year: siteSettings.calendar_year,
       };
 
       const res = await fetch('/api/settings', {
@@ -577,17 +617,33 @@ export default function AdminDashboard() {
   // --- HERO SLIDER LOGIC ---
   const addHeroSlide = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newHeroUrl) return;
+    if (!newHeroFile) return;
     try {
+      const form = new FormData();
+      form.append('file', newHeroFile);
+      form.append('folder', 'hero');
+
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: form });
+      const uploadJson = await uploadRes.json();
+      if (!uploadJson.success) {
+        alert('Upload failed: ' + (uploadJson.error || 'Unknown'));
+        return;
+      }
+
       const res = await fetch('/api/hero-slides', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: newHeroUrl, display_order: heroSlides.length }),
+        body: JSON.stringify({
+          image_url: uploadJson.url,
+          caption: newHeroCaption || null,
+          display_order: heroSlides.length,
+        }),
       });
       if (res.ok) {
         const json = await res.json();
         setHeroSlides([...heroSlides, json.data]);
-        setNewHeroUrl('');
+        setNewHeroFile(null);
+        setNewHeroCaption('');
       }
     } catch (error) {
       console.error(error);
@@ -616,6 +672,106 @@ export default function AdminDashboard() {
       if (res.ok) {
         setHeroSlides(heroSlides.filter(s => s.id !== id));
       }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // --- MILESTONES LOGIC ---
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [milestonesLoading, setMilestonesLoading] = useState(false);
+  const [milestoneForm, setMilestoneForm] = useState({
+    title_en: '', title_np: '', date_label: '', year_ad: '',
+    description_en: '', description_np: '',
+  });
+  const [editingMilestoneId, setEditingMilestoneId] = useState<number | null>(null);
+
+  const fetchMilestones = async () => {
+    try {
+      setMilestonesLoading(true);
+      const res = await fetch('/api/milestones');
+      if (res.ok) {
+        const json = await res.json();
+        setMilestones(json.data || []);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setMilestonesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "milestones") {
+      fetchMilestones();
+    }
+  }, [activeTab]);
+
+  const resetMilestoneForm = () => {
+    setMilestoneForm({ title_en: '', title_np: '', date_label: '', year_ad: '', description_en: '', description_np: '' });
+    setEditingMilestoneId(null);
+  };
+
+  const handleMilestoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { title_en, title_np, date_label, description_en, description_np } = milestoneForm;
+    if (!title_en.trim() || !title_np.trim() || !date_label.trim() || !description_en.trim() || !description_np.trim()) return;
+
+    try {
+      if (editingMilestoneId) {
+        const res = await fetch(`/api/milestones/${editingMilestoneId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(milestoneForm),
+        });
+        if (res.ok) {
+          fetchMilestones();
+          resetMilestoneForm();
+        }
+      } else {
+        const res = await fetch('/api/milestones', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(milestoneForm),
+        });
+        if (res.ok) {
+          fetchMilestones();
+          resetMilestoneForm();
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const editMilestone = (m: any) => {
+    setMilestoneForm({
+      title_en: m.title_en, title_np: m.title_np, date_label: m.date_label,
+      year_ad: m.year_ad || '', description_en: m.description_en, description_np: m.description_np,
+    });
+    setEditingMilestoneId(m.id);
+  };
+
+  const deleteMilestone = async (id: number) => {
+    if (!confirm('Delete this milestone?')) return;
+    try {
+      const res = await fetch(`/api/milestones/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setMilestones(milestones.filter(m => m.id !== id));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const reorderMilestones = async (orderedIds: number[]) => {
+    try {
+      await fetch('/api/milestones/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedIds }),
+      });
+      fetchMilestones();
     } catch (error) {
       console.error(error);
     }
@@ -680,6 +836,18 @@ export default function AdminDashboard() {
           >
             <Bell className="w-4 h-4 shrink-0" />
             <span>Manage Notices (CRUD)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("milestones")}
+            className={`w-full p-3.5 rounded flex items-center gap-3 cursor-pointer transition-all ${
+              activeTab === "milestones"
+                ? "bg-[#c9a227]/20 text-[#c9a227] border-l-4 border-[#c9a227]"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <History className="w-4 h-4 shrink-0" />
+            <span>Milestones</span>
           </button>
 
           <button
@@ -752,6 +920,18 @@ export default function AdminDashboard() {
           >
             <Calendar className="w-4 h-4 shrink-0" />
             <span>Events & Calendar</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("messages")}
+            className={`w-full p-3.5 rounded flex items-center gap-3 cursor-pointer transition-all ${
+              activeTab === "messages"
+                ? "bg-[#c9a227]/20 text-[#c9a227] border-l-4 border-[#c9a227]"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <Mail className="w-4 h-4 shrink-0" />
+            <span>Contact Messages</span>
           </button>
 
           <button
@@ -1197,39 +1377,39 @@ export default function AdminDashboard() {
             {/* CSV Uploader & Manual Form */}
             <div className="lg:col-span-2 flex flex-col gap-6">
               
-              {/* CSV Upload */}
+              {/* Spreadsheet Upload */}
               <div className="bg-white border border-[#c9a227]/20 rounded-lg p-5 shadow-sm">
                 <h3 className="font-serif font-bold text-lg text-[#1a3a2a] border-b border-[#1a3a2a]/10 pb-3 mb-4 flex items-center gap-2">
                   <Upload className="w-5 h-5 text-[#c9a227]" />
-                  <span>Upload Results CSV</span>
+                  <span>Upload Results Spreadsheet</span>
                 </h3>
                 
                 <div className="flex flex-col gap-4 font-sans text-xs">
                   <p className="text-slate-500">
-                    Upload a class results spreadsheet containing columns for:
+                    Upload a class results file (.xlsx or .csv) with columns:
                     <strong className="block font-mono text-[9px] mt-1 bg-slate-100 p-1.5 rounded">
-                      roll,name,english,nepali,math,science,social
+                      roll, name, english, nepali, math, science, social
                     </strong>
                   </p>
 
                   <div className="border-2 border-dashed border-[#c9a227]/30 rounded-lg p-4 text-center hover:bg-[#c9a227]/5 cursor-pointer relative">
                     <input
                       type="file"
-                      accept=".csv"
-                      onChange={handleCSVUpload}
+                      accept=".xlsx,.xls,.csv"
+                      onChange={handleFileUpload}
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                     />
                     <FileSpreadsheet className="w-8 h-8 text-[#c9a227] mx-auto opacity-70 mb-2" />
-                    <span className="font-bold text-[#1a3a2a] block">Choose CSV File</span>
-                    <span className="text-[10px] text-slate-400 mt-1">Drag and drop file here</span>
+                    <span className="font-bold text-[#1a3a2a] block">{fileName || "Choose File"}</span>
+                    <span className="text-[10px] text-slate-400 mt-1">Supports .xlsx, .xls, .csv</span>
                   </div>
 
-                  {csvFileContent && (
+                  {fileContent && (
                     <button
-                      onClick={processCSV}
+                      onClick={processSpreadsheet}
                       className="w-full py-2.5 bg-[#1a3a2a] text-white border border-[#c9a227] font-bold uppercase rounded cursor-pointer hover:bg-[#102419]"
                     >
-                      Process & Save Uploaded CSV
+                      Process & Save Uploaded Data
                     </button>
                   )}
                 </div>
@@ -1395,6 +1575,161 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* --- MILESTONES TAB --- */}
+        {activeTab === "milestones" && (
+          <div className="bg-white border border-[#c9a227]/20 rounded-lg p-5 md:p-8 shadow-sm text-left">
+            <h3 className="font-serif font-bold text-lg text-[#1a3a2a] border-b border-[#1a3a2a]/10 pb-3 mb-6 flex items-center gap-2">
+              <History className="w-5 h-5 text-[#c9a227]" />
+              <span>Historical Milestones Management</span>
+            </h3>
+
+            {/* Add / Edit Form */}
+            <div className="mb-8 p-5 border border-[#c9a227]/20 rounded-lg bg-[#fdf6e3]/20">
+              <h4 className="text-sm font-bold text-[#1a3a2a] mb-4">
+                {editingMilestoneId ? 'Edit Milestone' : 'Add New Milestone'}
+              </h4>
+              <form onSubmit={handleMilestoneSubmit} className="flex flex-col gap-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-600">Title (English)</label>
+                    <input type="text" value={milestoneForm.title_en} required
+                      onChange={(e) => setMilestoneForm({ ...milestoneForm, title_en: e.target.value })}
+                      placeholder="e.g. Establishment"
+                      className="p-2.5 border border-[#c9a227]/30 bg-white rounded focus:outline-none focus:border-[#1a3a2a]" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-600">Title (Nepali)</label>
+                    <input type="text" value={milestoneForm.title_np} required
+                      onChange={(e) => setMilestoneForm({ ...milestoneForm, title_np: e.target.value })}
+                      placeholder="e.g. विद्यालयको स्थापना"
+                      className="p-2.5 border border-[#c9a227]/30 bg-white rounded focus:outline-none focus:border-[#1a3a2a]" />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-600">Date Label <span className="text-rose-500">*</span></label>
+                    <input type="text" value={milestoneForm.date_label} required
+                      onChange={(e) => setMilestoneForm({ ...milestoneForm, date_label: e.target.value })}
+                      placeholder="e.g. 2037 BS"
+                      className="p-2.5 border border-[#c9a227]/30 bg-white rounded focus:outline-none focus:border-[#1a3a2a]" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-600">Year (AD) <span className="text-slate-400">(optional)</span></label>
+                    <input type="text" value={milestoneForm.year_ad}
+                      onChange={(e) => setMilestoneForm({ ...milestoneForm, year_ad: e.target.value })}
+                      placeholder="e.g. 1980 AD"
+                      className="p-2.5 border border-[#c9a227]/30 bg-white rounded focus:outline-none focus:border-[#1a3a2a]" />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-600">Description (English)</label>
+                    <textarea rows={3} value={milestoneForm.description_en} required
+                      onChange={(e) => setMilestoneForm({ ...milestoneForm, description_en: e.target.value })}
+                      placeholder="Describe this milestone..."
+                      className="p-2.5 border border-[#c9a227]/30 bg-white rounded focus:outline-none focus:border-[#1a3a2a] resize-none" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-600">Description (Nepali)</label>
+                    <textarea rows={3} value={milestoneForm.description_np} required
+                      onChange={(e) => setMilestoneForm({ ...milestoneForm, description_np: e.target.value })}
+                      placeholder="विवरण..."
+                      className="p-2.5 border border-[#c9a227]/30 bg-white rounded focus:outline-none focus:border-[#1a3a2a] resize-none" />
+                  </div>
+                </div>
+                <div className="flex gap-3 justify-end">
+                  {editingMilestoneId && (
+                    <button type="button" onClick={resetMilestoneForm}
+                      className="px-4 py-2 border border-slate-300 text-slate-600 rounded text-xs font-bold uppercase cursor-pointer hover:bg-slate-50">
+                      <X className="w-3.5 h-3.5 inline mr-1" /> Cancel
+                    </button>
+                  )}
+                  <button type="submit"
+                    className="px-6 py-2 bg-[#1a3a2a] text-white border border-[#c9a227] text-xs font-bold uppercase rounded cursor-pointer hover:bg-[#102419] flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    {editingMilestoneId ? 'Update' : 'Add'} Milestone
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Milestones List with Drag & Drop */}
+            <div className="border border-slate-200 rounded overflow-hidden">
+              <div className="grid grid-cols-12 gap-4 p-3 font-semibold text-slate-500 bg-slate-50 border-b border-slate-200 text-[10px] uppercase tracking-wider">
+                <div className="col-span-1 text-center">Order</div>
+                <div className="col-span-3">Title (EN) / (NP)</div>
+                <div className="col-span-2">Date</div>
+                <div className="col-span-4">Description</div>
+                <div className="col-span-1 text-center">Status</div>
+                <div className="col-span-1 text-center">Actions</div>
+              </div>
+
+              {milestonesLoading ? (
+                <div className="p-8 text-center text-slate-500 text-sm">Loading milestones...</div>
+              ) : milestones.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 text-sm">No milestones yet. Add one above.</div>
+              ) : (
+                <div className="divide-y divide-slate-100" id="milestone-list">
+                  {milestones.map((m, i) => (
+                    <div key={m.id} className="grid grid-cols-12 gap-4 p-3 items-center group hover:bg-slate-50 transition-colors"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', String(m.id));
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const draggedId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                        if (!draggedId || draggedId === m.id) return;
+                        const ids = milestones.map(x => x.id);
+                        const fromIdx = ids.indexOf(draggedId);
+                        const toIdx = ids.indexOf(m.id);
+                        if (fromIdx === -1 || toIdx === -1) return;
+                        ids.splice(fromIdx, 1);
+                        ids.splice(toIdx, 0, draggedId);
+                        reorderMilestones(ids);
+                      }}>
+                      <div className="col-span-1 flex justify-center text-slate-400">
+                        <GripVertical className="w-4 h-4 cursor-grab" />
+                      </div>
+                      <div className="col-span-3">
+                        <div className="text-xs font-bold text-slate-800 truncate">{m.title_en}</div>
+                        <div className="text-[10px] text-slate-500 truncate">{m.title_np}</div>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="px-2 py-0.5 bg-[#8b1a1a]/10 text-[#8b1a1a] text-[10px] font-bold rounded-full">
+                          {m.date_label}{m.year_ad ? ` (${m.year_ad})` : ''}
+                        </span>
+                      </div>
+                      <div className="col-span-4 truncate text-xs text-slate-600">
+                        <div className="truncate">{m.description_en}</div>
+                      </div>
+                      <div className="col-span-1 flex justify-center">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${m.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-400'}`}>
+                          {m.is_active ? 'Active' : 'Hidden'}
+                        </span>
+                      </div>
+                      <div className="col-span-1 flex justify-center gap-1">
+                        <button onClick={() => editMilestone(m)}
+                          className="p-1.5 text-slate-400 hover:text-[#1a3a2a] hover:bg-slate-100 rounded cursor-pointer"
+                          title="Edit">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => deleteMilestone(m.id)}
+                          className="p-1.5 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
+                          title="Delete">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* --- MODULE 6: HERO SLIDER TAB --- */}
         {activeTab === "hero" && (
           <div className="bg-white border border-[#c9a227]/20 rounded-lg p-5 md:p-8 shadow-sm text-left">
@@ -1404,20 +1739,32 @@ export default function AdminDashboard() {
             </h3>
 
             {/* Add New Slide Form */}
-            <div className="mb-8">
-              <h2 className="text-sm font-semibold mb-3 text-slate-700">Add New Photo</h2>
-              <form onSubmit={addHeroSlide} className="flex gap-3">
-                <input
-                  type="url"
-                  value={newHeroUrl}
-                  onChange={(e) => setNewHeroUrl(e.target.value)}
-                  placeholder="Paste image URL here (e.g. Unsplash link)"
-                  className="flex-1 px-4 py-2 text-sm border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none focus:border-[#1a3a2a]"
-                  required
-                />
+            <div className="mb-8 p-5 border border-[#c9a227]/20 rounded-lg bg-[#fdf6e3]/20">
+              <h2 className="text-sm font-semibold mb-4 text-slate-700">Add New Slide</h2>
+              <form onSubmit={addHeroSlide} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-slate-600">Upload Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setNewHeroFile(e.target.files?.[0] || null)}
+                    className="p-2 border border-[#c9a227]/30 bg-white rounded text-sm focus:outline-none focus:border-[#1a3a2a]"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-slate-600">Caption <span className="text-slate-400">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={newHeroCaption}
+                    onChange={(e) => setNewHeroCaption(e.target.value)}
+                    placeholder="e.g. School Annual Day 2081"
+                    className="p-2 border border-[#c9a227]/30 bg-white rounded text-sm focus:outline-none focus:border-[#1a3a2a]"
+                  />
+                </div>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-[#1a3a2a] text-white border border-[#c9a227] text-xs font-bold uppercase rounded cursor-pointer hover:bg-[#102419] flex items-center gap-2"
+                  className="self-start px-6 py-2 bg-[#1a3a2a] text-white border border-[#c9a227] text-xs font-bold uppercase rounded cursor-pointer hover:bg-[#102419] flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Add Slide
@@ -1429,8 +1776,9 @@ export default function AdminDashboard() {
             <div className="border border-slate-200 rounded overflow-hidden">
               <div className="grid grid-cols-12 gap-4 p-3 font-semibold text-slate-500 bg-slate-50 border-b border-slate-200 text-[10px] uppercase tracking-wider">
                 <div className="col-span-1 text-center">Order</div>
-                <div className="col-span-3">Preview</div>
-                <div className="col-span-5">Image URL</div>
+                <div className="col-span-2">Preview</div>
+                <div className="col-span-3">Image URL</div>
+                <div className="col-span-3">Caption</div>
                 <div className="col-span-2 text-center">Status</div>
                 <div className="col-span-1 text-center">Actions</div>
               </div>
@@ -1447,14 +1795,18 @@ export default function AdminDashboard() {
                         <GripVertical className="w-4 h-4 cursor-grab" />
                       </div>
                       
-                      <div className="col-span-3">
+                      <div className="col-span-2">
                         <div className="aspect-[16/9] bg-slate-100 rounded overflow-hidden border border-slate-200">
                           <img src={slide.image_url} alt="Preview" className="w-full h-full object-cover" />
                         </div>
                       </div>
 
-                      <div className="col-span-5 truncate text-xs text-slate-600 font-mono">
+                      <div className="col-span-3 truncate text-xs text-slate-600 font-mono">
                         {slide.image_url}
+                      </div>
+
+                      <div className="col-span-3 truncate text-xs text-slate-700">
+                        {slide.caption || <span className="italic text-slate-400">No caption</span>}
                       </div>
 
                       <div className="col-span-2 flex justify-center">
@@ -1518,7 +1870,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* EMIS & Announcement text */}
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="font-semibold text-[#1a3a2a]">EMIS Code</label>
                   <input
@@ -1537,6 +1889,61 @@ export default function AdminDashboard() {
                     value={siteSettings.schoolCode}
                     onChange={(e) => setSiteSettings({ ...siteSettings, schoolCode: e.target.value })}
                     placeholder="e.g. SC-123"
+                    className="p-2.5 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-semibold text-[#1a3a2a]">Academic Year (BS)</label>
+                  <input
+                    type="text"
+                    value={siteSettings.calendar_year}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, calendar_year: e.target.value })}
+                    placeholder="e.g. २०८३"
+                    className="p-2.5 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* Stats counters */}
+              <div className="grid sm:grid-cols-4 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-semibold text-[#1a3a2a]">Total Students</label>
+                  <input
+                    type="text"
+                    value={siteSettings.totalStudents}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, totalStudents: e.target.value })}
+                    placeholder="e.g. 847+"
+                    className="p-2.5 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-semibold text-[#1a3a2a]">Total Staff</label>
+                  <input
+                    type="text"
+                    value={siteSettings.totalStaff}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, totalStaff: e.target.value })}
+                    placeholder="e.g. 42"
+                    className="p-2.5 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-semibold text-[#1a3a2a]">Established Year (BS)</label>
+                  <input
+                    type="text"
+                    value={siteSettings.establishedYearBS}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, establishedYearBS: e.target.value })}
+                    placeholder="e.g. 2037"
+                    className="p-2.5 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-semibold text-[#1a3a2a]">Classes Range</label>
+                  <input
+                    type="text"
+                    value={siteSettings.schoolClasses}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, schoolClasses: e.target.value })}
+                    placeholder="e.g. 1–10"
                     className="p-2.5 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none"
                   />
                 </div>
@@ -1654,6 +2061,8 @@ export default function AdminDashboard() {
         {activeTab === "faculty" && <FacultyManager />}
         {activeTab === "gallery" && <GalleryManager />}
         {activeTab === "events" && <EventManager />}
+        {activeTab === "messages" && <MessageManager />}
+        {activeTab === "academicPrograms" && <AcademicProgramsManager />}
 
       </main>
     </div>

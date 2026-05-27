@@ -7,10 +7,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const id = parseInt((await params).id, 10);
     const body = await request.json();
-    const { image_url, is_active, display_order } = body;
+    const { image_url, caption, is_active, display_order } = body;
 
     const updateData: any = {};
     if (image_url !== undefined) updateData.image_url = image_url;
+    if (caption !== undefined) updateData.caption = caption;
     if (is_active !== undefined) updateData.is_active = is_active;
     if (display_order !== undefined) updateData.display_order = display_order;
 

@@ -59,11 +59,11 @@ async function getEvents(): Promise<any[]> {
   }
 }
 
-const stats = [
-  { value: '847+', label_en: 'Students', label_np: 'विद्यार्थीहरू' },
-  { value: '42', label_en: 'Staff Members', label_np: 'शिक्षक/कर्मचारी' },
-  { value: '2037', label_en: 'Established (BS)', label_np: 'स्थापना (BS)' },
-  { value: '1–10', label_en: 'Classes', label_np: 'कक्षाहरू' },
+const getStats = (settings: Record<string, string>) => [
+  { value: settings.total_students || '847+', label_en: 'Students', label_np: 'विद्यार्थीहरू' },
+  { value: settings.total_staff || '42', label_en: 'Staff Members', label_np: 'शिक्षक/कर्मचारी' },
+  { value: settings.established_year_bs || '2037', label_en: 'Established (BS)', label_np: 'स्थापना (BS)' },
+  { value: settings.school_classes || '1–10', label_en: 'Classes', label_np: 'कक्षाहरू' },
 ];
 
 const quickLinks = [
@@ -91,6 +91,8 @@ export default async function HomePage() {
   const heroSlides = await getActiveHeroSlides();
   const siteSettings = await getSiteSettings();
   const events = await getEvents();
+
+  const stats = getStats(siteSettings);
 
   const displayEvents = events.length > 0 ? events.map(e => ({
     date_bs: e.date_bs,
@@ -132,11 +134,11 @@ export default async function HomePage() {
               </div>
 
               <p className="text-sm md:text-base mb-8 font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                Punarbas-9, Sitabasti, Kanchanpur, Nepal &nbsp;·&nbsp; Est. 2037 BS
+                Punarbas-9, Sitabasti, Kanchanpur, Nepal &nbsp;·&nbsp; Est. {siteSettings.established_year_bs || '2037'} BS
               </p>
 
               <p className="text-sm mb-10 max-w-xl leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                Nurturing young minds with quality education rooted in Nepali values and global perspectives since 2037 BS.
+                Nurturing young minds with quality education rooted in Nepali values and global perspectives since {siteSettings.established_year_bs || '2037'} BS.
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -316,7 +318,7 @@ export default async function HomePage() {
       <footer className="py-10 mt-8 text-center" style={{ background: '#1a3a2a', color: 'rgba(255,255,255,0.6)' }}>
         <p className="text-sm font-medium text-white mb-1" style={{ fontFamily: 'Georgia, serif' }}>Shree Jiveen Shakti Secondary School</p>
         <p className="text-xs nepali-text mb-2" style={{ color: '#c9a227' }}>श्री जीवन शक्ति माध्यमिक विद्यालय</p>
-        <p className="text-xs">Punarbas-9, Sitabasti, Kanchanpur, Nepal &nbsp;|&nbsp; Principal: Prayag Raj Upadhyaya &nbsp;|&nbsp; Est. 2037 BS</p>
+        <p className="text-xs">Punarbas-9, Sitabasti, Kanchanpur, Nepal &nbsp;|&nbsp; Principal: Prayag Raj Upadhyaya &nbsp;|&nbsp; Est. {siteSettings.established_year_bs || '2037'} BS</p>
         {/** EMIS from site settings (if configured) */}
         {siteSettings?.emis ? (
           <p className="text-xs mt-2" style={{ color: '#c9a227' }}>

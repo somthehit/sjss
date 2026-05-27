@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { image_url, is_active = true, display_order = 0 } = body;
+    const { image_url, caption, is_active = true, display_order = 0 } = body;
 
     if (!image_url) {
       return NextResponse.json({ error: 'image_url is required' }, { status: 400 });
@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
 
     const inserted = await db.insert(hero_slides).values({
       image_url,
+      caption,
       is_active,
       display_order,
     }).returning();

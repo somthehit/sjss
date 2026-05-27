@@ -20,6 +20,7 @@ export const notices = pgTable('notices', {
 export const hero_slides = pgTable('hero_slides', {
   id: serial('id').primaryKey(),
   image_url: text('image_url').notNull(),
+  caption: text('caption'),
   is_active: boolean('is_active').notNull().default(true),
   display_order: integer('display_order').notNull().default(0),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -129,10 +130,91 @@ export const admin_users = pgTable('admin_users', {
 // ─── Calendar Wall Chart ──────────────────────────────────────────────────────
 export const calendar_data = pgTable('calendar_data', {
   id: serial('id').primaryKey(),
+  academic_year: varchar('academic_year', { length: 10 }).notNull().default('२०८३'),
   month_name: varchar('month_name', { length: 30 }).notNull(),
   month_index: integer('month_index').notNull(),
   days: jsonb('days').notNull().default('[]'),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Contact Messages ────────────────────────────────────────────────────────
+export const contact_messages = pgTable('contact_messages', {
+  id: serial('id').primaryKey(),
+  sender_name: text('sender_name').notNull(),
+  sender_email: text('sender_email').notNull(),
+  sender_phone: varchar('sender_phone', { length: 30 }),
+  message: text('message').notNull(),
+  is_read: boolean('is_read').notNull().default(false),
+  is_replied: boolean('is_replied').notNull().default(false),
+  admin_notes: text('admin_notes'),
+  submitted_at: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Academic Programs ────────────────────────────────────────────────────────
+export const academic_programs = pgTable('academic_programs', {
+  id: serial('id').primaryKey(),
+  level_en: varchar('level_en', { length: 50 }).notNull(), // e.g. "Primary (Grades 1-8)"
+  level_np: varchar('level_np', { length: 50 }).notNull(),
+  description_en: text('description_en').notNull(),
+  description_np: text('description_np').notNull(),
+  subjects: jsonb('subjects').notNull().default('[]'),
+  display_order: integer('display_order').notNull().default(0),
+  is_active: boolean('is_active').notNull().default(true),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+// ─── Historical Milestones ────────────────────────────────────────────────────
+export const milestones = pgTable('milestones', {
+  id: serial('id').primaryKey(),
+  title_en: text('title_en').notNull(),
+  title_np: text('title_np').notNull(),
+  date_label: varchar('date_label', { length: 50 }).notNull(),
+  year_ad: varchar('year_ad', { length: 20 }),
+  description_en: text('description_en').notNull(),
+  description_np: text('description_np').notNull(),
+  display_order: integer('display_order').notNull().default(0),
+  is_active: boolean('is_active').notNull().default(true),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Students ────────────────────────────────────────────────────────────────
+export const students = pgTable('students', {
+  id: serial('id').primaryKey(),
+  reg_no: varchar('reg_no', { length: 30 }).notNull().unique(),       // Admission / Registration Number
+  student_name_en: text('student_name_en').notNull(),
+  student_name_np: text('student_name_np').notNull().default(''),
+  dob: varchar('dob', { length: 30 }),                               // Date of Birth (BS or AD)
+  gender: varchar('gender', { length: 10 }).notNull().default('Male'), // Male | Female | Other
+  religion: varchar('religion', { length: 50 }),
+  ethnicity: varchar('ethnicity', { length: 50 }),
+  guardian_name: text('guardian_name').notNull().default(''),
+  guardian_relation: varchar('guardian_relation', { length: 30 }),   // Father | Mother | Guardian
+  contact_no: varchar('contact_no', { length: 20 }),
+  address: text('address'),
+  current_class: varchar('current_class', { length: 20 }).notNull(),  // "1", "2", ... "10", "11", "12"
+  current_section: varchar('current_section', { length: 5 }).default('A'),
+  roll_no: varchar('roll_no', { length: 20 }),
+  academic_year: varchar('academic_year', { length: 10 }).notNull(),  // e.g. "2083"
+  status: varchar('status', { length: 20 }).notNull().default('Active'), // Active | Passed Out | Dropped | Transferred
+  photo_url: text('photo_url'),
+  previous_school: text('previous_school'),
+  admission_date: varchar('admission_date', { length: 30 }),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Student Promotion History ────────────────────────────────────────────────
+// Tracks each time a student is promoted (or held back) for audit trail
+export const student_promotions = pgTable('student_promotions', {
+  id: serial('id').primaryKey(),
+  student_id: integer('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  from_class: varchar('from_class', { length: 20 }).notNull(),
+  to_class: varchar('to_class', { length: 20 }).notNull(),
+  from_academic_year: varchar('from_academic_year', { length: 10 }).notNull(),
+  to_academic_year: varchar('to_academic_year', { length: 10 }).notNull(),
+  result_id: integer('result_id').references(() => results.id),
+  promotion_type: varchar('promotion_type', { length: 20 }).notNull().default('auto'), // auto | manual
+  remarks: text('remarks'),
+  promoted_at: timestamp('promoted_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 // ─── Types (inferred) ────────────────────────────────────────────────────────
@@ -150,3 +232,11 @@ export type NewHeroSlide = typeof hero_slides.$inferInsert;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type CalendarMonth = typeof calendar_data.$inferSelect;
+export type ContactMessage = typeof contact_messages.$inferSelect;
+export type NewContactMessage = typeof contact_messages.$inferInsert;
+export type Milestone = typeof milestones.$inferSelect;
+export type NewMilestone = typeof milestones.$inferInsert;
+export type Student = typeof students.$inferSelect;
+export type NewStudent = typeof students.$inferInsert;
+export type StudentPromotion = typeof student_promotions.$inferSelect;
+

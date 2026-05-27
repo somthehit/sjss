@@ -32,59 +32,26 @@ export default function Notices() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "pinned">("pinned");
+  const [noticesData, setNoticesData] = useState<Notice[]>([]);
 
-  const noticesData: Notice[] = [
-    {
-      id: "1",
-      titleEn: "Admissions Open for Grade 11 Science & Commerce (Academic Year 2083)",
-      titleNp: "कक्षा ११ विज्ञान तथा व्यवस्थापन संकायमा भर्ना खुला सम्बन्धी सूचना (शैक्षिक वर्ष २०८३)",
-      date: "2083-05-10",
-      category: "Admission",
-      isPinned: true,
-      contentEn: "Application forms for Grade 11 Science and Commerce streams are available at the administration desk. Submit completed inquiries by Ashadh 20, 2083 along with transcripts and character certificates. Entrance exam date will be announced subsequently.",
-      contentNp: "शैक्षिक वर्ष २०८३ का लागि कक्षा ११ विज्ञान र व्यवस्थापन संकायमा भर्ना आवेदन फारम वितरण सुरु भएको छ। आवेदन फारम २०८३ असार २० गतेभित्र विद्यालयको प्रशासन शाखामा बुझाइसक्नुपर्नेछ। प्रवेश परीक्षाको मिति पछि प्रकाशित गरिनेछ।"
-    },
-    {
-      id: "2",
-      titleEn: "First Terminal Examination Schedule - Grades 1 to 10",
-      titleNp: "प्रथम त्रैमासिक परीक्षा तालिका प्रकाशन - कक्षा १ देखि १०",
-      date: "2083-05-20",
-      category: "Exam",
-      isPinned: true,
-      contentEn: "The First Terminal Examinations for Grades 1 to 10 will commence on Jestha 25, 2083. Daily routine and roll schedules have been pinned to respective class boards. Parents are requested to ensure pupils undergo regular reading regimes at home.",
-      contentNp: "कक्षा १ देखि १० सम्मको शैक्षिक सत्र २०८३ को प्रथम त्रैमासिक परीक्षा यही २०८३ जेठ २५ गतेदेखि सुरु हुने भएकाले विस्तृत परीक्षा तालिका सम्बन्धित कक्षाकोठाको सूचना पाटीमा टाँस गरिएको ब्यहोरा जानकारी गराइन्छ। विद्यार्थीहरूको नियमित गृहकार्य तथा तयारीमा सहयोग गरिदिनुहुन अभिभावकहरूमा अनुरोध छ।"
-    },
-    {
-      id: "3",
-      titleEn: "School Closure on Republic Day (Jestha 15)",
-      titleNp: "गणतन्त्र दिवसको उपलक्ष्यमा सार्वजनिक बिदा सम्बन्धी सूचना (जेठ १५ गते)",
-      date: "2083-05-14",
-      category: "Holiday",
-      isPinned: false,
-      contentEn: "Notice is hereby given that the school will remain closed on Jestha 15, 2083 on the national occasion of Republic Day of Nepal. Regular classroom operations will resume on Jestha 16 at normal school hours.",
-      contentNp: "मिति २०८३ जेठ १५ गते गणतन्त्र दिवसको पावन अवसरमा विद्यालयमा सार्वजनिक बिदा रहने ब्यहोरा सबैमा जानकारी गराइन्छ। नियमित पठनपाठन जेठ १६ गतेदेखि सामान्य रूपमा सञ्चालन हुनेछ।"
-    },
-    {
-      id: "4",
-      titleEn: "Annual Sports Week Prize Distribution Ceremony",
-      titleNp: "वार्षिक खेलकुद सप्ताह पुरस्कार वितरण समारोह सम्बन्धी सूचना",
-      date: "2083-04-18",
-      category: "Event",
-      isPinned: false,
-      contentEn: "The grand distribution ceremony for the Annual Sports Meet will be held inside the main school ground on Ashadh 5. All parents and local municipal leaders are cordially invited to witness and encourage our sports champions.",
-      contentNp: "यस विद्यालयको वार्षिक खेलकुद सप्ताहका विजयी खेलाडी छात्रछात्राहरूलाई पुरस्कार तथा प्रमाणपत्र वितरण गरिने वृहत् कार्यक्रम यही असार ५ गते विद्यालयको प्राङ्गणमा आयोजना हुन गइरहेकाले सम्पूर्ण अभिभावक तथा खेलप्रेमी महानुभावहरूलाई उपस्थितिको लागि हार्दिक निमन्त्रणा गर्दछौँ।"
-    },
-    {
-      id: "5",
-      titleEn: "SEE Examination Marksheet Download & Archive 2081",
-      titleNp: "एस.ई.ई. परीक्षा २०८१ को शैक्षिक लब्धाङ्क पत्र डाउनलोड सम्बन्धी सूचना",
-      date: "2083-03-25",
-      category: "Results",
-      isPinned: false,
-      contentEn: "Official academic marksheets for the SEE batches of 2081 are ready for download. Students can insert their Roll Numbers directly into the Results tab on this portal to generate a digital marksheet copy. Hardcopies are available at administration desks.",
-      contentNp: "२०८१ सालको एस.ई.ई. परीक्षा उत्तीर्ण विद्यार्थीहरूको शैक्षिक लब्धाङ्क पत्र (Marksheet) यस विद्यालयको वेबसाइटमा उपलब्ध गराइएको छ। विद्यार्थीहरूले नतिजा ट्याबमा गई आफ्नो रोल नम्बर प्रविष्ट गरेर डिजिटल मार्कसिट डाउनलोड गर्न सक्नुहुनेछ।"
-    }
-  ];
+  React.useEffect(() => {
+    fetch('/api/notices')
+      .then(res => res.ok ? res.json() : { data: [] })
+      .then(json => {
+        const mapped = (json.data || []).map((n: any) => ({
+          id: n.id,
+          titleEn: n.title_en,
+          titleNp: n.title_np,
+          date: n.published_at || n.created_at || new Date().toISOString(),
+          category: n.category,
+          isPinned: n.is_pinned,
+          contentEn: n.content_en,
+          contentNp: n.content_np,
+        }));
+        setNoticesData(mapped);
+      })
+      .catch(console.error);
+  }, []);
 
   // Filtering notices
   const filteredNotices = noticesData
