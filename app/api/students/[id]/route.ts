@@ -3,9 +3,10 @@ import { db } from '@/lib/db';
 import { students, student_promotions } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = parseInt(params.id);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
     const [student] = await db.select().from(students).where(eq(students.id, id));
     if (!student) {
       return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
@@ -24,9 +25,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = parseInt(params.id);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
     const body = await request.json();
 
     const updateData: any = { updated_at: new Date() };
@@ -65,9 +67,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = parseInt(params.id);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr);
     await db.delete(students).where(eq(students.id, id));
     return NextResponse.json({ success: true, message: 'Student deleted' });
   } catch (error) {

@@ -145,9 +145,9 @@ export default function About() {
           
           <div className="text-sm md:text-base text-[#444444] leading-relaxed mt-6 space-y-4 font-serif text-justify">
             {siteSettings?.principal_message_en ? (
-              language === 'en' 
-                ? siteSettings.principal_message_en.split('\n').map((para, i) => <p key={i}>{para}</p>)
-                : siteSettings.principal_message_np?.split('\n').map((para, i) => <p key={i}>{para}</p>)
+              language === 'EN' 
+                ? siteSettings.principal_message_en.split('\n').map((para: string, i: number) => <p key={i}>{para}</p>)
+                : siteSettings.principal_message_np?.split('\n').map((para: string, i: number) => <p key={i}>{para}</p>)
             ) : (
               <>
                 <p>

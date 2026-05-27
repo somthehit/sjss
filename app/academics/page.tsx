@@ -92,7 +92,7 @@ export default function Academics() {
               {t(program.level_en, program.level_np)}
             </h2>
             <div className="text-sm text-[#444444] leading-relaxed mt-4 font-sans space-y-3">
-              {language === 'en' 
+              {language === 'EN' 
                 ? program.description_en?.split('\n').map((para: string, i: number) => <p key={i}>{para}</p>)
                 : program.description_np?.split('\n').map((para: string, i: number) => <p key={i}>{para}</p>)
               }
