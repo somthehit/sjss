@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { Notice, HeroSlide } from '@/lib/schema';
 
 import HeroSlider from '@/components/HeroSlider';
-import BSCalendar from '@/components/BSCalendar';
 
 export const metadata: Metadata = {
   title: 'Shree Jiveen Shakti Secondary School | Kanchanpur, Nepal',
@@ -307,8 +306,8 @@ export default async function HomePage() {
             ))}
           </div>
 
-          <div className="mt-12">
-            <BSCalendar />
+          <div className="mt-12 flex justify-center">
+            <iframe src="https://www.ashesh.com.np/calendar-widget/calendar.php?tithi=1&header_color=default&api=872156q120" frameBorder="0" scrolling="no" marginWidth={0} marginHeight={0} style={{ border: 'none', overflow: 'hidden', width: 370, height: 333, borderRadius: 5 }} allowTransparency={true} />
           </div>
         </section>
 
