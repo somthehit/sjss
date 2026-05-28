@@ -34,6 +34,7 @@ import {
   EyeOff,
   Mail,
   History,
+  BookOpen,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toNepaliNumerals } from "@/lib/dateConverter";
@@ -932,6 +933,18 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
           >
             <Mail className="w-4 h-4 shrink-0" />
             <span>Contact Messages</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("academicPrograms")}
+            className={`w-full p-3.5 rounded flex items-center gap-3 cursor-pointer transition-all ${
+              activeTab === "academicPrograms"
+                ? "bg-[#c9a227]/20 text-[#c9a227] border-l-4 border-[#c9a227]"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <BookOpen className="w-4 h-4 shrink-0" />
+            <span>Academic Programs</span>
           </button>
 
           <button
