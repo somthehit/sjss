@@ -1,7 +1,7 @@
 import { createClient as createSupabaseMiddlewareResponse } from "./utils/supabase/middleware";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   return createSupabaseMiddlewareResponse(request);
 }
 
