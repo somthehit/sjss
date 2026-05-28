@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { contact_messages } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 // PUT: Update message (mark read, replied, add admin notes)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -23,11 +21,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: 'No update fields provided' }, { status: 400 });
     }
 
-    const [updated] = await db.update(contact_messages)
-      .set(updateData)
-      .where(eq(contact_messages.id, msgId))
-      .returning();
+    const { data: updated, error } = await supabaseAdmin()
+      .from('contact_messages')
+      .update(updateData)
+      .eq('id', msgId)
+      .select()
+      .single();
 
+    if (error) throw error;
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Message not found' }, { status: 404 });
     }
@@ -48,7 +49,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ success: false, error: 'Invalid ID' }, { status: 400 });
     }
 
-    await db.delete(contact_messages).where(eq(contact_messages.id, msgId));
+    const { error } = await supabaseAdmin()
+      .from('contact_messages')
+      .delete()
+      .eq('id', msgId);
+
+    if (error) throw error;
     return NextResponse.json({ success: true, message: 'Message deleted' });
   } catch (err) {
     console.error(err);

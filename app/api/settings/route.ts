@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { site_settings } from '@/lib/schema';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { uploadFileToMediaBucket } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const rows = await db.select().from(site_settings);
-    const data = Object.fromEntries(rows.map(r => [r.key, r.value]));
-    return NextResponse.json({ success: true, data });
+    const { data, error } = await supabaseAdmin().from('site_settings').select('*');
+    if (error) throw error;
+    const rows = data || [];
+    const result = Object.fromEntries(rows.map(r => [r.key, r.value]));
+    return NextResponse.json({ success: true, data: result });
   } catch {
     return NextResponse.json({ success: false, error: 'Failed to fetch settings' }, { status: 500 });
   }
@@ -17,12 +18,14 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json() as Record<string, string>;
     for (const [key, value] of Object.entries(body)) {
-      await db.insert(site_settings)
-        .values({ key, value, updated_at: new Date() })
-        .onConflictDoUpdate({ target: site_settings.key, set: { value, updated_at: new Date() } });
+      const { error } = await supabaseAdmin()
+        .from('site_settings')
+        .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      if (error) throw error;
     }
     return NextResponse.json({ success: true, message: 'Settings updated' });
-  } catch {
+  } catch (err) {
+    console.error(err);
     return NextResponse.json({ success: false, error: 'Failed to update settings' }, { status: 500 });
   }
 }
@@ -43,10 +46,11 @@ export async function POST(request: NextRequest) {
 
     const { url: publicUrl } = await uploadFileToMediaBucket(file, 'logos');
 
-    // Persist the logo URL to site_settings
-    await db.insert(site_settings)
-      .values({ key: 'logo_url', value: publicUrl, updated_at: new Date() })
-      .onConflictDoUpdate({ target: site_settings.key, set: { value: publicUrl, updated_at: new Date() } });
+    const { error } = await supabaseAdmin()
+      .from('site_settings')
+      .upsert({ key: 'logo_url', value: publicUrl, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+
+    if (error) throw error;
 
     return NextResponse.json({ success: true, url: publicUrl });
   } catch (err: unknown) {

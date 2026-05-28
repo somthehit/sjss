@@ -1,37 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { hero_slides } from '@/lib/schema';
-import { desc, asc } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { uploadFileToMediaBucket } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const data = await db.select().from(hero_slides).orderBy(asc(hero_slides.display_order));
-    return NextResponse.json({ data });
-  } catch (error) {
-    console.error('Failed to fetch hero slides:', error);
-    return NextResponse.json({ error: 'Failed to fetch slides' }, { status: 500 });
+    const { data, error } = await supabaseAdmin()
+      .from('hero_slides')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data: data || [] });
+  } catch {
+    return NextResponse.json({ success: false, error: 'Failed to fetch hero slides' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { image_url, caption, is_active = true, display_order = 0 } = body;
+    const form = await request.formData();
+    const file = form.get('file') as File | null;
+    const caption = (form.get('caption') as string) || null;
 
-    if (!image_url) {
-      return NextResponse.json({ error: 'image_url is required' }, { status: 400 });
+    let image_url = '';
+    if (file) {
+      const { url } = await uploadFileToMediaBucket(file, 'hero-slides');
+      image_url = url;
+    } else {
+      image_url = (form.get('image_url') as string) || '';
     }
 
-    const inserted = await db.insert(hero_slides).values({
-      image_url,
-      caption,
-      is_active,
-      display_order,
-    }).returning();
+    if (!image_url) {
+      return NextResponse.json({ success: false, error: 'Image file or URL is required' }, { status: 400 });
+    }
 
-    return NextResponse.json({ data: inserted[0] });
+    const { data, error } = await supabaseAdmin()
+      .from('hero_slides')
+      .insert({ image_url, caption, display_order: 0 })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
-    console.error('Failed to insert slide:', error);
-    return NextResponse.json({ error: 'Failed to create slide' }, { status: 500 });
+    console.error('POST /api/hero-slides error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to create hero slide' }, { status: 500 });
   }
 }

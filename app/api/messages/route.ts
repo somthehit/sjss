@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { contact_messages } from '@/lib/schema';
-import { desc } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 // GET: Fetch all messages (admin)
 export async function GET() {
   try {
-    const rows = await db.select().from(contact_messages).orderBy(desc(contact_messages.submitted_at));
+    const { data: rows, error } = await supabaseAdmin()
+      .from('contact_messages')
+      .select()
+      .order('submitted_at', { ascending: false });
+
+    if (error) throw error;
     return NextResponse.json({ success: true, data: rows });
   } catch (err) {
     console.error(err);
@@ -29,13 +32,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid email format' }, { status: 400 });
     }
 
-    const [inserted] = await db.insert(contact_messages).values({
-      sender_name: name,
-      sender_email: email,
-      sender_phone: phone || null,
-      message: message,
-    }).returning();
+    const { data: inserted, error } = await supabaseAdmin()
+      .from('contact_messages')
+      .insert({
+        sender_name: name,
+        sender_email: email,
+        sender_phone: phone || null,
+        message: message,
+      })
+      .select()
+      .single();
 
+    if (error) throw error;
     return NextResponse.json({ success: true, data: inserted }, { status: 201 });
   } catch (err) {
     console.error(err);

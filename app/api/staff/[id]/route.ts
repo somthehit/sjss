@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { staff } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const [member] = await db.select().from(staff).where(eq(staff.id, parseInt(id)));
+    const { data: member, error } = await supabaseAdmin()
+      .from('staff')
+      .select()
+      .eq('id', parseInt(id))
+      .single();
+
+    if (error) throw error;
     if (!member) return NextResponse.json({ success: false, error: 'Staff not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: member });
   } catch (error) {
@@ -18,7 +22,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const [updated] = await db.update(staff).set(body).where(eq(staff.id, parseInt(id))).returning();
+    const { data: updated, error } = await supabaseAdmin()
+      .from('staff')
+      .update(body)
+      .eq('id', parseInt(id))
+      .select()
+      .single();
+
+    if (error) throw error;
     if (!updated) return NextResponse.json({ success: false, error: 'Staff not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
@@ -29,7 +40,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await db.delete(staff).where(eq(staff.id, parseInt(id)));
+    const { error } = await supabaseAdmin()
+      .from('staff')
+      .delete()
+      .eq('id', parseInt(id));
+
+    if (error) throw error;
     return NextResponse.json({ success: true, message: 'Deleted' });
   } catch (error) {
     return NextResponse.json({ success: false, error: 'Failed to delete staff' }, { status: 500 });

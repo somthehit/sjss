@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { hero_slides } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -15,16 +13,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (is_active !== undefined) updateData.is_active = is_active;
     if (display_order !== undefined) updateData.display_order = display_order;
 
-    const updated = await db.update(hero_slides)
-      .set(updateData)
-      .where(eq(hero_slides.id, id))
-      .returning();
+    const { data, error } = await supabaseAdmin()
+      .from('hero_slides')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (updated.length === 0) {
-      return NextResponse.json({ error: 'Slide not found' }, { status: 404 });
-    }
+    if (error) throw error;
+    if (!data) return NextResponse.json({ error: 'Slide not found' }, { status: 404 });
 
-    return NextResponse.json({ data: updated[0] });
+    return NextResponse.json({ data });
   } catch (error) {
     console.error('Failed to update slide:', error);
     return NextResponse.json({ error: 'Failed to update slide' }, { status: 500 });
@@ -34,13 +33,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const id = parseInt((await params).id, 10);
-    const deleted = await db.delete(hero_slides).where(eq(hero_slides.id, id)).returning();
 
-    if (deleted.length === 0) {
-      return NextResponse.json({ error: 'Slide not found' }, { status: 404 });
-    }
+    const { data, error } = await supabaseAdmin()
+      .from('hero_slides')
+      .delete()
+      .eq('id', id)
+      .select()
+      .single();
 
-    return NextResponse.json({ success: true, data: deleted[0] });
+    if (error) throw error;
+    if (!data) return NextResponse.json({ error: 'Slide not found' }, { status: 404 });
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Failed to delete slide:', error);
     return NextResponse.json({ error: 'Failed to delete slide' }, { status: 500 });

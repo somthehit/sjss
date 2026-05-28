@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { students } from '@/lib/schema';
-import { eq, desc, ilike, and, or } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,42 +12,29 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = (page - 1) * limit;
 
-    const conditions = [];
+    let query = supabaseAdmin().from('students').select('*', { count: 'exact' });
 
     if (search) {
-      conditions.push(
-        or(
-          ilike(students.student_name_en, `%${search}%`),
-          ilike(students.student_name_np, `%${search}%`),
-          ilike(students.reg_no, `%${search}%`),
-          ilike(students.roll_no ?? '', `%${search}%`),
-          ilike(students.guardian_name, `%${search}%`)
-        )
+      query = query.or(
+        `student_name_en.ilike.%${search}%,student_name_np.ilike.%${search}%,reg_no.ilike.%${search}%,roll_no.ilike.%${search}%,guardian_name.ilike.%${search}%`
       );
     }
 
-    if (classFilter) conditions.push(eq(students.current_class, classFilter));
-    if (yearFilter) conditions.push(eq(students.academic_year, yearFilter));
-    if (statusFilter) conditions.push(eq(students.status, statusFilter));
+    if (classFilter) query = query.eq('current_class', classFilter);
+    if (yearFilter) query = query.eq('academic_year', yearFilter);
+    if (statusFilter) query = query.eq('status', statusFilter);
 
-    const data = await db
-      .select()
-      .from(students)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(students.current_class, students.roll_no)
-      .limit(limit)
-      .offset(offset);
+    const { data, error, count } = await query
+      .order('current_class')
+      .order('roll_no')
+      .range(offset, offset + limit - 1);
 
-    // Get total count for pagination
-    const allData = await db
-      .select({ id: students.id })
-      .from(students)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+    if (error) throw error;
 
     return NextResponse.json({
       success: true,
-      data,
-      total: allData.length,
+      data: data || [],
+      total: count || 0,
       page,
       limit,
     });
@@ -77,36 +62,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [created] = await db.insert(students).values({
-      reg_no,
-      student_name_en,
-      student_name_np: student_name_np || '',
-      dob: dob || null,
-      gender: gender || 'Male',
-      religion: religion || null,
-      ethnicity: ethnicity || null,
-      guardian_name: guardian_name || '',
-      guardian_relation: guardian_relation || null,
-      contact_no: contact_no || null,
-      address: address || null,
-      current_class,
-      current_section: current_section || 'A',
-      roll_no: roll_no || null,
-      academic_year,
-      status: status || 'Active',
-      photo_url: photo_url || null,
-      previous_school: previous_school || null,
-      admission_date: admission_date || null,
-    }).returning();
+    const { data: created, error } = await supabaseAdmin()
+      .from('students')
+      .insert({
+        reg_no,
+        student_name_en,
+        student_name_np: student_name_np || '',
+        dob: dob || null,
+        gender: gender || 'Male',
+        religion: religion || null,
+        ethnicity: ethnicity || null,
+        guardian_name: guardian_name || '',
+        guardian_relation: guardian_relation || null,
+        contact_no: contact_no || null,
+        address: address || null,
+        current_class,
+        current_section: current_section || 'A',
+        roll_no: roll_no || null,
+        academic_year,
+        status: status || 'Active',
+        photo_url: photo_url || null,
+        previous_school: previous_school || null,
+        admission_date: admission_date || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { success: false, error: 'A student with this registration number already exists' },
+          { status: 409 }
+        );
+      }
+      throw error;
+    }
 
     return NextResponse.json({ success: true, data: created }, { status: 201 });
   } catch (error: any) {
-    if (error?.code === '23505') {
-      return NextResponse.json(
-        { success: false, error: 'A student with this registration number already exists' },
-        { status: 409 }
-      );
-    }
     console.error('POST /api/students error:', error);
     return NextResponse.json({ success: false, error: 'Failed to create student' }, { status: 500 });
   }

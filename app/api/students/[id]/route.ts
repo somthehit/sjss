@@ -1,24 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { students, student_promotions } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
-    const [student] = await db.select().from(students).where(eq(students.id, id));
+    const { data: student, error } = await supabaseAdmin()
+      .from('students')
+      .select()
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
     if (!student) {
       return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
     }
 
-    // Also fetch promotion history
-    const promotions = await db
+    const { data: promotions, error: promoError } = await supabaseAdmin()
+      .from('student_promotions')
       .select()
-      .from(student_promotions)
-      .where(eq(student_promotions.student_id, id));
+      .eq('student_id', id);
 
-    return NextResponse.json({ success: true, data: { ...student, promotions } });
+    if (promoError) throw promoError;
+
+    return NextResponse.json({ success: true, data: { ...student, promotions: promotions || [] } });
   } catch (error) {
     console.error('GET /api/students/[id] error:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch student' }, { status: 500 });
@@ -31,7 +36,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const id = parseInt(idStr);
     const body = await request.json();
 
-    const updateData: any = { updated_at: new Date() };
+    const updateData: any = { updated_at: new Date().toISOString() };
     const fields = [
       'reg_no', 'student_name_en', 'student_name_np', 'dob', 'gender',
       'religion', 'ethnicity', 'guardian_name', 'guardian_relation',
@@ -44,11 +49,22 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       if (body[field] !== undefined) updateData[field] = body[field];
     }
 
-    const [updated] = await db
-      .update(students)
-      .set(updateData)
-      .where(eq(students.id, id))
-      .returning();
+    const { data: updated, error } = await supabaseAdmin()
+      .from('students')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { success: false, error: 'Registration number already in use' },
+          { status: 409 }
+        );
+      }
+      throw error;
+    }
 
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
@@ -56,12 +72,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error: any) {
-    if (error?.code === '23505') {
-      return NextResponse.json(
-        { success: false, error: 'Registration number already in use' },
-        { status: 409 }
-      );
-    }
     console.error('PUT /api/students/[id] error:', error);
     return NextResponse.json({ success: false, error: 'Failed to update student' }, { status: 500 });
   }
@@ -71,7 +81,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr);
-    await db.delete(students).where(eq(students.id, id));
+    const { error } = await supabaseAdmin()
+      .from('students')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
     return NextResponse.json({ success: true, message: 'Student deleted' });
   } catch (error) {
     console.error('DELETE /api/students/[id] error:', error);

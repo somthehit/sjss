@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { students, student_promotions } from '@/lib/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { computePromotion } from '@/lib/promotion';
 
 /**
@@ -18,21 +16,24 @@ export async function POST(request: NextRequest) {
     let targetStudents: any[] = [];
 
     if (student_ids && Array.isArray(student_ids) && student_ids.length > 0) {
-      // Promote specific students
-      targetStudents = await db
+      const { data, error } = await supabaseAdmin()
+        .from('students')
         .select()
-        .from(students)
-        .where(and(inArray(students.id, student_ids), eq(students.status, 'Active')));
+        .in('id', student_ids)
+        .eq('status', 'Active');
+
+      if (error) throw error;
+      targetStudents = data || [];
     } else if (bulkClass && bulkYear) {
-      // Promote entire class
-      targetStudents = await db
+      const { data, error } = await supabaseAdmin()
+        .from('students')
         .select()
-        .from(students)
-        .where(and(
-          eq(students.current_class, bulkClass),
-          eq(students.academic_year, bulkYear),
-          eq(students.status, 'Active')
-        ));
+        .eq('current_class', bulkClass)
+        .eq('academic_year', bulkYear)
+        .eq('status', 'Active');
+
+      if (error) throw error;
+      targetStudents = data || [];
     } else {
       return NextResponse.json(
         { success: false, error: 'Provide either student_ids array OR class+academic_year for bulk promotion' },
@@ -52,26 +53,33 @@ export async function POST(request: NextRequest) {
         student.academic_year
       );
 
-      // Update student record
-      await db.update(students)
-        .set({
+      const { error: updateError } = await supabaseAdmin()
+        .from('students')
+        .update({
           current_class: isPassedOut ? student.current_class : nextClass,
           academic_year: nextYear,
           status: isPassedOut ? 'Passed Out' : 'Active',
-          updated_at: new Date(),
+          updated_at: new Date().toISOString(),
         })
-        .where(eq(students.id, student.id));
+        .eq('id', student.id);
 
-      // Record promotion history
-      const [promo] = await db.insert(student_promotions).values({
-        student_id: student.id,
-        from_class: student.current_class,
-        to_class: isPassedOut ? 'Passed Out' : nextClass,
-        from_academic_year: student.academic_year,
-        to_academic_year: nextYear,
-        promotion_type: 'manual',
-        remarks: remarks || (isPassedOut ? 'Passed out of school' : `Promoted to Class ${nextClass}`),
-      }).returning();
+      if (updateError) throw updateError;
+
+      const { data: promo, error: insertError } = await supabaseAdmin()
+        .from('student_promotions')
+        .insert({
+          student_id: student.id,
+          from_class: student.current_class,
+          to_class: isPassedOut ? 'Passed Out' : nextClass,
+          from_academic_year: student.academic_year,
+          to_academic_year: nextYear,
+          promotion_type: 'manual',
+          remarks: remarks || (isPassedOut ? 'Passed out of school' : `Promoted to Class ${nextClass}`),
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
 
       promotionResults.push({
         student_id: student.id,

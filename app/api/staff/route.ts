@@ -1,25 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { staff } from '@/lib/schema';
-import { and, asc, eq } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const department = searchParams.get('department');
-    const conditions = [eq(staff.is_active, true)];
+
+    let query = supabaseAdmin()
+      .from('staff')
+      .select('*')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
 
     if (department) {
-      conditions.push(eq(staff.department, department));
+      query = query.eq('department', department);
     }
 
-    const data = await db
-      .select()
-      .from(staff)
-      .where(and(...conditions))
-      .orderBy(asc(staff.display_order));
+    const { data, error } = await query;
 
-    return NextResponse.json({ success: true, data });
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data: data || [] });
   } catch (error) {
     console.error('GET /api/staff error:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch staff' }, { status: 500 });
@@ -29,8 +30,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const [created] = await db.insert(staff).values(body).returning();
-    return NextResponse.json({ success: true, data: created }, { status: 201 });
+    const { data, error } = await supabaseAdmin()
+      .from('staff')
+      .insert(body)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data }, { status: 201 });
   } catch {
     return NextResponse.json({ success: false, error: 'Failed to create staff' }, { status: 500 });
   }

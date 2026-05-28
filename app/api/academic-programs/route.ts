@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { academic_programs } from '@/lib/schema';
-import { eq, asc } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET() {
   try {
-    const data = await db.select().from(academic_programs).orderBy(asc(academic_programs.display_order));
+    const { data, error } = await supabaseAdmin()
+      .from('academic_programs')
+      .select()
+      .order('display_order', { ascending: true });
+
+    if (error) throw error;
     return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('GET academic programs error:', error);
@@ -22,16 +25,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'level_en and level_np are required' }, { status: 400 });
     }
 
-    const [created] = await db.insert(academic_programs).values({
-      level_en,
-      level_np,
-      description_en: description_en || '',
-      description_np: description_np || '',
-      subjects: subjects || [],
-      display_order: display_order || 0,
-      is_active: is_active !== undefined ? is_active : true,
-    }).returning();
+    const { data: created, error } = await supabaseAdmin()
+      .from('academic_programs')
+      .insert({
+        level_en,
+        level_np,
+        description_en: description_en || '',
+        description_np: description_np || '',
+        subjects: subjects || [],
+        display_order: display_order || 0,
+        is_active: is_active !== undefined ? is_active : true,
+      })
+      .select()
+      .single();
 
+    if (error) throw error;
     return NextResponse.json({ success: true, data: created });
   } catch (error) {
     console.error('POST academic program error:', error);

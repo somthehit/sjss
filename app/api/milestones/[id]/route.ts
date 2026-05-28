@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { milestones } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -19,16 +17,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (is_active !== undefined) updateData.is_active = is_active;
     if (display_order !== undefined) updateData.display_order = display_order;
 
-    const updated = await db.update(milestones)
-      .set(updateData)
-      .where(eq(milestones.id, id))
-      .returning();
+    const { data: updated, error } = await supabaseAdmin()
+      .from('milestones')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (updated.length === 0) {
+    if (error) throw error;
+    if (!updated) {
       return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ data: updated[0] });
+    return NextResponse.json({ data: updated });
   } catch (error) {
     console.error('Failed to update milestone:', error);
     return NextResponse.json({ error: 'Failed to update milestone' }, { status: 500 });
@@ -38,13 +39,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const id = parseInt((await params).id, 10);
-    const deleted = await db.delete(milestones).where(eq(milestones.id, id)).returning();
+    const { data: deleted, error } = await supabaseAdmin()
+      .from('milestones')
+      .delete()
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (deleted.length === 0) {
+    if (error) throw error;
+    if (!deleted) {
       return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: deleted[0] });
+    return NextResponse.json({ success: true, data: deleted });
   } catch (error) {
     console.error('Failed to delete milestone:', error);
     return NextResponse.json({ error: 'Failed to delete milestone' }, { status: 500 });

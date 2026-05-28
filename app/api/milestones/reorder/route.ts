@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { milestones } from '@/lib/schema';
-import { eq, sql } from 'drizzle-orm';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -13,9 +11,12 @@ export async function PUT(request: NextRequest) {
     }
 
     for (let i = 0; i < orderedIds.length; i++) {
-      await db.update(milestones)
-        .set({ display_order: i })
-        .where(eq(milestones.id, orderedIds[i]));
+      const { error } = await supabaseAdmin()
+        .from('milestones')
+        .update({ display_order: i })
+        .eq('id', orderedIds[i]);
+
+      if (error) throw error;
     }
 
     return NextResponse.json({ success: true });
