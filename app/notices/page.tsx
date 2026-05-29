@@ -152,34 +152,14 @@ export default function Notices() {
     `;
   };
 
-  const handleDownloadPDF = async (notice: Notice) => {
-    const html = getNoticeHTML(notice);
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
-    wrapper.style.position = 'fixed';
-    wrapper.style.top = '0';
-    wrapper.style.left = '0';
-    wrapper.style.zIndex = '-1000';
-    wrapper.style.opacity = '0.01';
-    wrapper.style.pointerEvents = 'none';
-    wrapper.style.width = '800px';
-    document.body.appendChild(wrapper);
-
-    await new Promise((r) => setTimeout(r, 500));
-
-    try {
-      const html2pdf = (await import('html2pdf.js')).default;
-      await html2pdf().set({
-        margin: [0.5, 0.5, 0.5, 0.5],
-        filename: `notice-${notice.id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0, logging: false },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-      }).from(wrapper).save();
-    } catch (e) {
-      console.error('PDF download failed:', e);
-    }
-    document.body.removeChild(wrapper);
+  const handleDownloadPDF = (notice: Notice) => {
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Notice - ${notice.titleEn}</title></head><body>${getNoticeHTML(notice)}</body></html>`;
+    const win = window.open('', '_blank', 'width=800,height=600');
+    if (!win) { alert('Pop-up blocked! Please allow pop-ups for this site.'); return; }
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 500);
   };
 
   return (
