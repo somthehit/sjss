@@ -156,12 +156,26 @@ export default function Notices() {
     const html = getNoticeHTML(notice);
     const wrapper = document.createElement('div');
     wrapper.innerHTML = html;
-    wrapper.style.position = 'absolute';
-    wrapper.style.left = '-9999px';
+    wrapper.style.position = 'fixed';
+    wrapper.style.top = '0';
+    wrapper.style.left = '0';
+    wrapper.style.zIndex = '-1000';
+    wrapper.style.opacity = '0.01';
+    wrapper.style.pointerEvents = 'none';
+    wrapper.style.width = '800px';
     document.body.appendChild(wrapper);
+
+    await new Promise((r) => setTimeout(r, 500));
+
     try {
       const html2pdf = (await import('html2pdf.js')).default;
-      await html2pdf().from(wrapper).save(`notice-${notice.id}.pdf`);
+      await html2pdf().set({
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `notice-${notice.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0, logging: false },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+      }).from(wrapper).save();
     } catch (e) {
       console.error('PDF download failed:', e);
     }
