@@ -184,6 +184,8 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
     popupNoticeEnabled: false,
     popupNoticeEn: "",
     popupNoticeNp: "",
+    announcementLabelEn: "URGENT:",
+    announcementLabelNp: "महत्वपूर्ण सूचना:",
     emis: "EMIS-00000",
     schoolCode: "SC-0000",
     logoUrl: "",
@@ -275,6 +277,8 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
           popupNoticeEnabled: s.popup_notice_enabled === 'true',
           popupNoticeEn: s.popup_notice_en,
           popupNoticeNp: s.popup_notice_np,
+          announcementLabelEn: s.announcement_label_en || "URGENT:",
+          announcementLabelNp: s.announcement_label_np || "महत्वपूर्ण सूचना:",
         };
         setSiteSettings((prev) => ({ ...prev, ...mapped }));
         localStorage.setItem('sjss_settings', JSON.stringify(mapped));
@@ -595,6 +599,8 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
         popup_notice_enabled: String(siteSettings.popupNoticeEnabled),
         popup_notice_en: siteSettings.popupNoticeEn || "",
         popup_notice_np: siteSettings.popupNoticeNp || "",
+        announcement_label_en: siteSettings.announcementLabelEn || "URGENT:",
+        announcement_label_np: siteSettings.announcementLabelNp || "महत्वपूर्ण सूचना:",
       };
 
       const res = await fetch('/api/settings', {
@@ -2026,6 +2032,26 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                   >
                     Upload
                   </button>
+                </div>
+              </div>
+
+              {/* Announcement label */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-semibold text-[#1a3a2a]">Announcement Label (Nepali)</label>
+                  <input
+                    value={siteSettings.announcementLabelNp}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, announcementLabelNp: e.target.value })}
+                    className="p-2.5 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none font-bold"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-semibold text-[#1a3a2a]">Announcement Label (English)</label>
+                  <input
+                    value={siteSettings.announcementLabelEn}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, announcementLabelEn: e.target.value })}
+                    className="p-2.5 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none"
+                  />
                 </div>
               </div>
 

@@ -8,6 +8,8 @@ export default function AnnouncementBar() {
   const [isVisible, setIsVisible] = useState(false);
   const [announcementEN, setAnnouncementEN] = useState("");
   const [announcementNP, setAnnouncementNP] = useState("");
+  const [labelEN, setLabelEN] = useState("");
+  const [labelNP, setLabelNP] = useState("");
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -18,6 +20,8 @@ export default function AnnouncementBar() {
         const np = s.announcement_text_np || "एस.ई.ई. परीक्षा नतिजा २०८१ प्रकाशित भएको छ! | शैक्षिक वर्ष २०८३ को लागि भर्ना खुला गरिएको छ!";
         setAnnouncementEN(en);
         setAnnouncementNP(np);
+        setLabelEN(s.announcement_label_en || "URGENT:");
+        setLabelNP(s.announcement_label_np || "महत्वपूर्ण सूचना:");
         const enabled = s.announcement_visible !== 'false';
         if (enabled && !localStorage.getItem("announcement_dismissed")) {
           setIsVisible(true);
@@ -38,7 +42,7 @@ export default function AnnouncementBar() {
       <div className="flex items-center gap-2 flex-grow max-w-7xl mx-auto overflow-hidden">
         <div className="flex items-center gap-1.5 text-[#c9a227] shrink-0 font-semibold text-sm">
           <Megaphone className="w-4 h-4 animate-bounce" />
-          <span>{t("URGENT:", "महत्वपूर्ण सूचना:")}</span>
+          <span>{t(labelEN || "URGENT:", labelNP || "महत्वपूर्ण सूचना:")}</span>
         </div>
 
         <div className="relative flex overflow-x-hidden w-full font-medium text-xs md:text-sm">
