@@ -14,12 +14,12 @@ export default function AnnouncementBar() {
     fetch('/api/settings').then(r => r.json()).then(json => {
       if (json.success && json.data) {
         const s = json.data;
-        const en = s.announcement_text_en || "";
-        const np = s.announcement_text_np || "";
+        const en = s.announcement_text_en || "SEE Examination Results 2081 are out! | Admissions for Academic Year 2083 are now open!";
+        const np = s.announcement_text_np || "एस.ई.ई. परीक्षा नतिजा २०८१ प्रकाशित भएको छ! | शैक्षिक वर्ष २०८३ को लागि भर्ना खुला गरिएको छ!";
         setAnnouncementEN(en);
         setAnnouncementNP(np);
-        const enabled = s.announcement_visible === 'true';
-        if (enabled && en && !localStorage.getItem("announcement_dismissed")) {
+        const enabled = s.announcement_visible !== 'false';
+        if (enabled && !localStorage.getItem("announcement_dismissed")) {
           setIsVisible(true);
         }
       }
@@ -31,7 +31,7 @@ export default function AnnouncementBar() {
     localStorage.setItem("announcement_dismissed", "true");
   };
 
-  if (!isVisible || !announcementEN) return null;
+  if (!isVisible) return null;
 
   return (
     <div className="no-print relative w-full bg-[#8b1a1a] text-white py-2 px-4 flex items-center justify-between overflow-hidden border-b border-[#c9a227] z-50">
