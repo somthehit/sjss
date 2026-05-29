@@ -29,8 +29,8 @@ export default function Faculty() {
     async function fetchFaculty() {
       try {
         const res = await fetch('/api/staff');
+        if (!res.ok) { setLoading(false); return; }
         const json = await res.json();
-        console.log('API Response:', json);
         
         if (json.success && json.data) {
           const data = json.data || [];

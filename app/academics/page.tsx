@@ -107,7 +107,7 @@ export default function Academics() {
                   {program.subjects.map((sub: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 p-2.5 bg-[#1a3a2a]/5 border border-[#c9a227]/10 rounded font-semibold text-[#1a3a2a]">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#c9a227]" />
-                      <span>{t(sub.nameEn || sub.name_en, sub.nameNp || sub.name_np)}</span>
+                      <span>{typeof sub === 'string' ? sub : t(sub.name_en || sub.nameEn || '', sub.name_np || sub.nameNp || '')}</span>
                     </div>
                   ))}
                 </div>

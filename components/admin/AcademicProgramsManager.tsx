@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BookOpen, Edit, Trash2, Plus, RefreshCw, GripVertical } from "lucide-react";
+import { BookOpen, Edit, Trash2, Plus, RefreshCw, GripVertical, X } from "lucide-react";
 
 export default function AcademicProgramsManager() {
   const [programs, setPrograms] = useState<any[]>([]);
@@ -16,7 +16,9 @@ export default function AcademicProgramsManager() {
   const [descNp, setDescNp] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [displayOrder, setDisplayOrder] = useState(0);
-  const [subjectsJson, setSubjectsJson] = useState("[]");
+  const [subjectsList, setSubjectsList] = useState<{ name_en: string; name_np: string }[]>([]);
+  const [newSubjectEn, setNewSubjectEn] = useState("");
+  const [newSubjectNp, setNewSubjectNp] = useState("");
 
   useEffect(() => {
     fetchPrograms();
@@ -38,20 +40,13 @@ export default function AcademicProgramsManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let subjects = [];
-    try {
-      subjects = JSON.parse(subjectsJson);
-    } catch (e) {
-      alert("Invalid JSON for subjects. Must be an array of objects e.g. [{\"name_en\": \"English\", \"name_np\": \"अंग्रेजी\"}]");
-      return;
-    }
 
     const payload = {
       level_en: levelEn,
       level_np: levelNp,
       description_en: descEn,
       description_np: descNp,
-      subjects,
+      subjects: subjectsList,
       is_active: isActive,
       display_order: displayOrder
     };
@@ -99,7 +94,7 @@ export default function AcademicProgramsManager() {
     setDescNp(p.description_np);
     setIsActive(p.is_active);
     setDisplayOrder(p.display_order);
-    setSubjectsJson(JSON.stringify(p.subjects || [], null, 2));
+    setSubjectsList(p.subjects || []);
   };
 
   const handleDelete = async (id: number) => {
@@ -116,6 +111,17 @@ export default function AcademicProgramsManager() {
     }
   };
 
+  const addSubject = () => {
+    if (!newSubjectEn.trim()) return;
+    setSubjectsList([...subjectsList, { name_en: newSubjectEn.trim(), name_np: newSubjectNp.trim() || newSubjectEn.trim() }]);
+    setNewSubjectEn("");
+    setNewSubjectNp("");
+  };
+
+  const removeSubject = (index: number) => {
+    setSubjectsList(subjectsList.filter((_, i) => i !== index));
+  };
+
   const resetForm = () => {
     setIsEditing(false);
     setEditingId(null);
@@ -125,7 +131,9 @@ export default function AcademicProgramsManager() {
     setDescNp("");
     setIsActive(true);
     setDisplayOrder(0);
-    setSubjectsJson("[]");
+    setSubjectsList([]);
+    setNewSubjectEn("");
+    setNewSubjectNp("");
   };
 
   return (
@@ -174,8 +182,24 @@ export default function AcademicProgramsManager() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Subjects (JSON Array)</label>
-                <textarea required rows={4} value={subjectsJson} onChange={e => setSubjectsJson(e.target.value)} className="w-full border rounded p-2 text-sm font-mono" placeholder={`[{"name_en":"Math","name_np":"गणित"}]`} />
+                <label className="block text-xs font-bold text-gray-700 mb-1">Subjects</label>
+                {subjectsList.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {subjectsList.map((s, i) => (
+                      <span key={i} className="inline-flex items-center gap-1 bg-[#1a3a2a]/5 text-[#1a3a2a] border border-[#1a3a2a]/15 text-[11px] font-semibold px-2 py-1 rounded-md">
+                        {s.name_en}
+                        <button type="button" onClick={() => removeSubject(i)} className="text-red-500 hover:text-red-700">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-1">
+                  <input value={newSubjectEn} onChange={e => setNewSubjectEn(e.target.value)} placeholder="Subject (EN)" className="flex-1 border rounded p-2 text-xs" onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSubject())} />
+                  <input value={newSubjectNp} onChange={e => setNewSubjectNp(e.target.value)} placeholder="(NP)" className="w-20 border rounded p-2 text-xs" onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSubject())} />
+                  <button type="button" onClick={addSubject} className="bg-[#1a3a2a] text-white px-2.5 py-1.5 rounded text-xs font-bold hover:bg-[#2a5a4a] whitespace-nowrap">+ Add</button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -237,8 +261,20 @@ export default function AcademicProgramsManager() {
                         {p.is_active ? 'Active' : 'Inactive'}
                       </span>
                       <span className="text-gray-500">Order: {p.display_order}</span>
-                      <span className="text-gray-500">Subjects: {p.subjects?.length || 0}</span>
+                      <span className="text-gray-500">{p.subjects?.length || 0} subjects</span>
                     </div>
+                    {p.subjects && p.subjects.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {p.subjects.map((s: any, i: number) => {
+                          const label = typeof s === 'string' ? s : (s.name_en || s.name_np || '');
+                          return (
+                            <span key={i} className="bg-[#1a3a2a]/5 text-[#1a3a2a] border border-[#1a3a2a]/15 text-[11px] font-semibold px-2.5 py-1 rounded-md">
+                              {label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

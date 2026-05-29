@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await supabaseAdmin()
+    const { searchParams } = new URL(request.url);
+    const publishedOnly = searchParams.get('published') !== 'false';
+
+    let query = supabaseAdmin()
       .from('albums')
       .select('*')
-      .eq('is_published', true)
       .order('display_order', { ascending: true });
+
+    if (publishedOnly) {
+      query = query.eq('is_published', true);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return NextResponse.json({ success: true, data: data || [] });

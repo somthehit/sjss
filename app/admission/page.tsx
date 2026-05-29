@@ -97,12 +97,12 @@ export default function Admission() {
         body: JSON.stringify(payload),
       });
 
-      const json = await res.json();
-
       if (!res.ok) {
         alert(t("Submission failed. Please try again.", "आवेदन दर्ता असफल। पुनः प्रयास गर्नुहोस्।"));
         return;
       }
+
+      const json = await res.json();
 
       // Generate a readable ID from the DB id
       const appId = `JSSS-2083-${String(json.data.id).padStart(2, "0")}`;
@@ -131,9 +131,10 @@ export default function Admission() {
       }
       const numericId = parseInt(match[1], 10);
       const res = await fetch(`/api/admissions/${numericId}`);
+      if (!res.ok) { setSearchLoading(false); return; }
       const json = await res.json();
 
-      if (res.ok && json.data) {
+      if (json.data) {
         setSearchResult({
           id: `JSSS-2083-${String(json.data.id).padStart(2, "0")}`,
           student_name: json.data.student_name,

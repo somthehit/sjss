@@ -47,14 +47,16 @@ import AcademicProgramsManager from "@/components/admin/AcademicProgramsManager"
 type Tab = "overview" | "notices" | "milestones" | "admissions" | "results" | "settings" | "hero" | "faculty" | "gallery" | "events" | "messages" | "academicPrograms";
 
 interface Notice {
-  id: string;
-  titleEn: string;
-  titleNp: string;
-  date: string;
-  category: "Exam" | "Holiday" | "Event" | "Admission" | "Results";
-  isPinned: boolean;
-  contentEn: string;
-  contentNp: string;
+  id: number;
+  title_en: string;
+  title_np: string;
+  category: string;
+  is_pinned: boolean;
+  is_published: boolean;
+  content_en: string;
+  content_np: string;
+  published_at: string;
+  created_at: string;
 }
 
 interface AdmissionInquiry {
@@ -206,36 +208,10 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
     }
     if (savedRole) setRole(savedRole);
 
-    // Load data from localStorage or seed defaults
-    const localNotices = localStorage.getItem("sjss_notices");
-    if (localNotices) {
-      setNotices(JSON.parse(localNotices));
-    } else {
-      const defaults: Notice[] = [
-        {
-          id: "1",
-          titleEn: "Admissions Open for Grade 11 Science & Commerce (Academic Year 2083)",
-          titleNp: "कक्षा ११ विज्ञान तथा व्यवस्थापन संकायमा भर्ना खुला सम्बन्धी सूचना (शैक्षिक वर्ष २०८३)",
-          date: "2083-05-10",
-          category: "Admission",
-          isPinned: true,
-          contentEn: "Application forms for Grade 11 Science and Commerce streams are available at the administration desk. Submit completed inquiries by Ashadh 20, 2083.",
-          contentNp: "शैक्षिक वर्ष २०८३ का लागि कक्षा ११ विज्ञान र व्यवस्थापन संकायमा भर्ना आवेदन फारम वितरण सुरु भएको छ। आवेदन फारम २०८३ असार २० गतेभित्र बुझाउनुहोला।"
-        },
-        {
-          id: "2",
-          titleEn: "First Terminal Examination Schedule - Grades 1 to 10",
-          titleNp: "प्रथम त्रैमासिक परीक्षा तालिका प्रकाशन - कक्षा १ देखि १०",
-          date: "2083-05-20",
-          category: "Exam",
-          isPinned: true,
-          contentEn: "The First Terminal Examinations for Grades 1 to 10 will commence on Jestha 25, 2083. Daily routine and roll schedules have been pinned.",
-          contentNp: "कक्षा १ देखि १० सम्मको प्रथम त्रैमासिक परीक्षा यही २०८३ जेठ २५ गतेदेखि सुरु हुने भएकाले विस्तृत परीक्षा तालिका टाँस गरिएको ब्यहोरा जानकारी गराइन्छ।"
-        }
-      ];
-      setNotices(defaults);
-      localStorage.setItem("sjss_notices", JSON.stringify(defaults));
-    }
+    // Fetch notices from API
+    fetch('/api/notices?limit=50').then(r => r.ok ? r.json() : { data: [] }).then(j => {
+      if (j.data?.length) setNotices(j.data);
+    }).catch(() => {});
 
 
 
@@ -284,71 +260,85 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
   };
 
   // --- NOTICE MANAGER CRUD LOGIC ---
-  const [noticeForm, setNoticeForm] = useState<Omit<Notice, "id">>({
-    titleEn: "",
-    titleNp: "",
-    date: "2083-05-23",
+  const [noticeForm, setNoticeForm] = useState<Omit<Notice, "id" | "created_at">>({
+    title_en: "",
+    title_np: "",
     category: "Exam",
-    isPinned: false,
-    contentEn: "",
-    contentNp: ""
+    is_pinned: false,
+    is_published: true,
+    content_en: "",
+    content_np: "",
+    published_at: new Date().toISOString().split('T')[0]
   });
-  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
+  const [editingNoticeId, setEditingNoticeId] = useState<number | null>(null);
 
-  const saveNoticesToStorage = (updated: Notice[]) => {
-    setNotices(updated);
-    localStorage.setItem("sjss_notices", JSON.stringify(updated));
-    // Trigger storage event to alert other tabs
-    window.dispatchEvent(new Event("storage"));
-  };
-
-  const handleNoticeSubmit = (e: React.FormEvent) => {
+  const handleNoticeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!noticeForm.titleEn.trim() || !noticeForm.titleNp.trim()) return;
+    if (!noticeForm.title_en.trim() || !noticeForm.title_np.trim()) return;
 
-    if (editingNoticeId) {
-      const updated = notices.map((n) =>
-        n.id === editingNoticeId ? { ...n, ...noticeForm } : n
-      );
-      saveNoticesToStorage(updated);
-      setEditingNoticeId(null);
-    } else {
-      const newNotice: Notice = {
-        id: String(Date.now()),
-        ...noticeForm
-      };
-      saveNoticesToStorage([newNotice, ...notices]);
+    try {
+      if (editingNoticeId) {
+        const res = await fetch(`/api/notices/${editingNoticeId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(noticeForm),
+        });
+        if (res.ok) {
+          const j = await res.json();
+          setNotices((prev) => prev.map((n) => n.id === editingNoticeId ? j.data : n));
+          setEditingNoticeId(null);
+        }
+      } else {
+        const res = await fetch('/api/notices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(noticeForm),
+        });
+        if (res.ok) {
+          const j = await res.json();
+          setNotices((prev) => [j.data, ...prev]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save notice:', error);
     }
 
-    // Reset Form
     setNoticeForm({
-      titleEn: "",
-      titleNp: "",
-      date: "2083-05-23",
+      title_en: "",
+      title_np: "",
       category: "Exam",
-      isPinned: false,
-      contentEn: "",
-      contentNp: ""
+      is_pinned: false,
+      is_published: true,
+      content_en: "",
+      content_np: "",
+      published_at: new Date().toISOString().split('T')[0]
     });
   };
 
   const handleEditNotice = (n: Notice) => {
     setEditingNoticeId(n.id);
     setNoticeForm({
-      titleEn: n.titleEn,
-      titleNp: n.titleNp,
-      date: n.date,
+      title_en: n.title_en,
+      title_np: n.title_np,
       category: n.category,
-      isPinned: n.isPinned,
-      contentEn: n.contentEn,
-      contentNp: n.contentNp
+      is_pinned: n.is_pinned,
+      is_published: n.is_published,
+      content_en: n.content_en,
+      content_np: n.content_np,
+      published_at: n.published_at?.split('T')[0] || new Date().toISOString().split('T')[0]
     });
   };
 
-  const handleDeleteNotice = (id: string) => {
+  const handleDeleteNotice = async (id: number) => {
     if (confirm(t("Delete this notice?", "के तपाईं यो सूचना हटाउन चाहनुहुन्छ?"))) {
-      const filtered = notices.filter((n) => n.id !== id);
-      saveNoticesToStorage(filtered);
+      try {
+        const res = await fetch(`/api/notices/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          setNotices((prev) => prev.filter((n) => n.id !== id));
+        }
+      } catch (error) {
+        console.error('Failed to delete notice:', error);
+      }
     }
   };
 
@@ -376,8 +366,10 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
     if (!confirm(t("Delete this application inquiry record?", "के तपाईं यो सोधपुछ रेकर्ड हटाउन चाहनुहुन्छ?"))) return;
     try {
       setAdmissionsUpdating(id);
-      // Use PUT to mark as rejected (soft delete) or remove from UI
-      setInquiries((prev) => prev.filter((inq) => inq.id !== id));
+      const res = await fetch(`/api/admissions/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setInquiries((prev) => prev.filter((inq) => inq.id !== id));
+      }
     } catch (error) {
       console.error('Failed to delete admission:', error);
     } finally {
@@ -599,6 +591,11 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
         body: form,
       });
 
+      if (!res.ok) {
+        alert('Upload failed');
+        return;
+      }
+
       const json = await res.json();
 
       if (!json.success) {
@@ -625,6 +622,7 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
       form.append('folder', 'hero');
 
       const uploadRes = await fetch('/api/upload', { method: 'POST', body: form });
+      if (!uploadRes.ok) { alert('Upload failed'); return; }
       const uploadJson = await uploadRes.json();
       if (!uploadJson.success) {
         alert('Upload failed: ' + (uploadJson.error || 'Unknown'));
@@ -1047,7 +1045,7 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                 <div className="flex flex-col gap-3 font-sans text-xs">
                   {notices.slice(0, 3).map((n) => (
                     <div key={n.id} className="p-3 border border-[#c9a227]/10 rounded bg-[#fdf6e3]/10 flex items-center justify-between">
-                      <span className="font-serif font-bold text-slate-800 truncate max-w-[200px]">{n.titleEn}</span>
+                        <span className="font-serif font-bold text-slate-800 truncate max-w-[200px]">{n.title_en}</span>
                       <span className="px-2 py-0.5 bg-[#8b1a1a]/10 text-[#8b1a1a] font-semibold rounded text-[9px] uppercase">{n.category}</span>
                     </div>
                   ))}
@@ -1069,8 +1067,8 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                   {inquiries.slice(0, 3).map((inq) => (
                     <div key={inq.id} className="p-3 border border-[#c9a227]/10 rounded bg-[#fdf6e3]/10 flex items-center justify-between">
                       <div>
-                        <span className="font-bold block text-slate-800">{inq.studentName}</span>
-                        <span className="text-[10px] text-slate-400">{inq.previousSchool}</span>
+                        <span className="font-bold block text-slate-800">{inq.student_name}</span>
+                        <span className="text-[10px] text-slate-400">{inq.previous_school}</span>
                       </div>
                       <span className={`px-2 py-0.5 font-bold rounded text-[9px] uppercase ${inq.status === "approved" ? "bg-emerald-100 text-emerald-800" : "bg-[#c9a227]/15 text-[#c9a227]"}`}>
                         {inq.status}
@@ -1100,7 +1098,7 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                   <button
                     onClick={() => {
                       setEditingNoticeId(null);
-                      setNoticeForm({ titleEn: "", titleNp: "", date: "2083-05-23", category: "Exam", isPinned: false, contentEn: "", contentNp: "" });
+                      setNoticeForm({ title_en: "", title_np: "", category: "Exam", is_pinned: false, is_published: true, content_en: "", content_np: "", published_at: new Date().toISOString().split('T')[0] });
                     }}
                     className="text-xs font-bold text-[#8b1a1a] hover:underline"
                   >
@@ -1117,8 +1115,8 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                   <input
                     type="text"
                     required
-                    value={noticeForm.titleEn}
-                    onChange={(e) => setNoticeForm({ ...noticeForm, titleEn: e.target.value })}
+                    value={noticeForm.title_en}
+                    onChange={(e) => setNoticeForm({ ...noticeForm, title_en: e.target.value })}
                     placeholder="e.g. SEE Registration 2083 Form Guidelines"
                     className="p-2 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none focus:border-[#1a3a2a]"
                   />
@@ -1130,8 +1128,8 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                   <input
                     type="text"
                     required
-                    value={noticeForm.titleNp}
-                    onChange={(e) => setNoticeForm({ ...noticeForm, titleNp: e.target.value })}
+                    value={noticeForm.title_np}
+                    onChange={(e) => setNoticeForm({ ...noticeForm, title_np: e.target.value })}
                     placeholder="उदा: एस.ई.ई. परीक्षा फारम भर्ने सम्बन्धी सूचना"
                     className="p-2 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none focus:border-[#1a3a2a]"
                   />
@@ -1157,8 +1155,8 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                     <input
                       type="checkbox"
                       id="cmsPinToggle"
-                      checked={noticeForm.isPinned}
-                      onChange={(e) => setNoticeForm({ ...noticeForm, isPinned: e.target.checked })}
+                      checked={noticeForm.is_pinned}
+                      onChange={(e) => setNoticeForm({ ...noticeForm, is_pinned: e.target.checked })}
                       className="w-4 h-4 accent-[#1a3a2a] cursor-pointer"
                     />
                     <label htmlFor="cmsPinToggle" className="font-semibold text-[#1a3a2a] cursor-pointer">
@@ -1172,8 +1170,8 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                   <label className="font-semibold text-[#1a3a2a]">Notice Content (English)</label>
                   <textarea
                     rows={4}
-                    value={noticeForm.contentEn}
-                    onChange={(e) => setNoticeForm({ ...noticeForm, contentEn: e.target.value })}
+                    value={noticeForm.content_en}
+                    onChange={(e) => setNoticeForm({ ...noticeForm, content_en: e.target.value })}
                     placeholder="Enter English notice description details..."
                     className="p-2 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none focus:border-[#1a3a2a]"
                   />
@@ -1184,8 +1182,8 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                   <label className="font-semibold text-[#1a3a2a]">Notice Content (Nepali)</label>
                   <textarea
                     rows={4}
-                    value={noticeForm.contentNp}
-                    onChange={(e) => setNoticeForm({ ...noticeForm, contentNp: e.target.value })}
+                    value={noticeForm.content_np}
+                    onChange={(e) => setNoticeForm({ ...noticeForm, content_np: e.target.value })}
                     placeholder="नेपाली भाषामा सूचनाको विस्तृत विवरण राख्नुहोस्..."
                     className="p-2 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none focus:border-[#1a3a2a]"
                   />
@@ -1220,14 +1218,14 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                   <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
                     {notices.map((n) => (
                       <tr key={n.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 pr-4 max-w-xs truncate font-serif font-bold text-slate-800">{n.titleEn}</td>
+                        <td className="py-3 pr-4 max-w-xs truncate font-serif font-bold text-slate-800">{n.title_en}</td>
                         <td className="py-3 text-center">
                           <span className="px-2.5 py-0.5 bg-[#8b1a1a]/10 text-[#8b1a1a] text-[9px] font-bold rounded-full">
                             {n.category}
                           </span>
                         </td>
                         <td className="py-3 text-center text-[#c9a227] font-bold">
-                          {n.isPinned ? "★ PINNED" : "NORMAL"}
+                          {n.is_pinned ? "★ PINNED" : "NORMAL"}
                         </td>
                         <td className="py-3 text-center">
                           <div className="flex gap-2 justify-center">
