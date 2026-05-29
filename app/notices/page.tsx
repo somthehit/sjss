@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useLanguage } from "@/components/LanguageContext";
 import { getDualCalendarString, toNepaliNumerals } from "@/lib/dateConverter";
 import DhakaDivider from "@/components/DhakaDivider";
@@ -33,6 +33,8 @@ export default function Notices() {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "pinned">("pinned");
   const [noticesData, setNoticesData] = useState<Notice[]>([]);
+  const [printNoticeId, setPrintNoticeId] = useState<string | null>(null);
+  const printTriggerRef = useRef(false);
 
   React.useEffect(() => {
     fetch('/api/notices')
@@ -77,9 +79,46 @@ export default function Notices() {
 
   const categories = ["All", "Exam", "Holiday", "Event", "Admission", "Results"];
 
-  // Helper to trigger print dialog for the browser
-  const handlePrint = () => {
-    window.print();
+  // Helper to trigger print dialog for selected notice
+  const handlePrintNotice = (notice: Notice) => {
+    setPrintNoticeId(notice.id);
+    printTriggerRef.current = true;
+  };
+
+  const handlePrintBoard = () => {
+    setPrintNoticeId("__all__");
+    printTriggerRef.current = true;
+  };
+
+  // Trigger print after state update
+  useEffect(() => {
+    if (printTriggerRef.current) {
+      printTriggerRef.current = false;
+      setTimeout(() => {
+        window.print();
+      }, 100);
+    }
+  }, [printNoticeId]);
+
+  // Clean up print state after print dialog closes
+  useEffect(() => {
+    const handle = () => setPrintNoticeId(null);
+    window.addEventListener("afterprint", handle);
+    return () => window.removeEventListener("afterprint", handle);
+  }, []);
+
+  const formatDateNp = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      const months = ["वैशाख","जेठ","असार","साउन","भदौ","असोज","कात्तिक","मङ्सिर","पुस","माघ","फागुन","चैत"];
+      return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    } catch { return dateStr; }
+  };
+
+  const formatDateEn = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    } catch { return dateStr; }
   };
 
   return (
@@ -99,13 +138,6 @@ export default function Notices() {
             "परीक्षा तालिका, बिदा तथा भर्ना सम्बन्धी आधिकारिक सूचनाहरू यहाँ प्राप्त गर्नुहोस्।"
           )}
         </p>
-      </div>
-
-      {/* PRINT-ONLY HEADER */}
-      <div className="hidden print-only text-center border-b-2 border-black pb-4 mb-8">
-        <h1 className="text-3xl font-bold font-serif text-black uppercase">Shree Jiveen Shakti Secondary School</h1>
-        <p className="text-sm font-sans">Punarbas-9, Sitabasti, Kanchanpur, Nepal</p>
-        <h2 className="text-xl font-bold font-serif mt-4 uppercase border-y border-black py-1">Official Board Notices</h2>
       </div>
 
       {/* Search & Configuration Bar */}
@@ -162,7 +194,7 @@ export default function Notices() {
 
           {/* Print Button */}
           <button
-            onClick={handlePrint}
+            onClick={handlePrintBoard}
             className="flex items-center gap-1 px-3 py-2 bg-[#1a3a2a] text-white rounded font-bold hover:bg-[#102419] cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5 text-[#c9a227]" />
@@ -244,21 +276,20 @@ export default function Notices() {
               {/* Actions Footer */}
               <div className="mt-5 pt-3 border-t border-[#c9a227]/10 flex justify-between items-center no-print">
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => handlePrintNotice(notice)}
                   className="text-xs font-bold text-[#1a3a2a] hover:text-[#c9a227] flex items-center gap-1 cursor-pointer"
                 >
                   <Printer className="w-3 h-3 text-[#c9a227]" />
                   <span>{t("Print Notice", "प्रिन्ट")}</span>
                 </button>
                 
-                <a
-                  href="#"
-                  onClick={(e) => e.preventDefault()}
+                <button
+                  onClick={() => handlePrintNotice(notice)}
                   className="text-xs font-bold text-[#444444]/40 hover:text-[#1a3a2a] flex items-center gap-1 cursor-pointer"
                 >
                   <Download className="w-3 h-3" />
                   <span>{t("Download PDF", "पि.डि.एफ.")}</span>
-                </a>
+                </button>
               </div>
             </div>
           ))}
@@ -294,7 +325,7 @@ export default function Notices() {
               {/* Actions */}
               <div className="flex items-center gap-3 mt-3 md:mt-0 shrink-0 no-print text-xs font-semibold font-sans">
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => handlePrintNotice(notice)}
                   className="p-2 border border-[#c9a227]/30 hover:bg-[#1a3a2a] hover:text-[#c9a227] text-[#1a3a2a] rounded cursor-pointer transition-colors"
                   title="Print Notice"
                 >
@@ -307,6 +338,66 @@ export default function Notices() {
       )}
 
       <DhakaDivider />
+
+      {/* Print-only formatted notice */}
+      {printNoticeId && (
+        <div className="hidden print-formatted">
+          {/* School letterhead */}
+          <div className="text-center border-b-2 border-[#1a3a2a] pb-4 mb-6">
+            <h1 className="text-2xl font-bold font-serif text-[#1a3a2a] uppercase">Shree Jiveen Shakti Secondary School</h1>
+            <p className="text-sm text-gray-600">Punarbas-9, Sitabasti, Kanchanpur, Nepal</p>
+            <p className="text-xs text-gray-500">Phone: +977-99-420XXX | Email: info@sjss.edu.np</p>
+            <p className="text-xs text-gray-500">EMIS: EMIS-00000 | School Code: SC-0000</p>
+          </div>
+
+          <h2 className="text-lg font-bold font-serif text-center uppercase mb-6 border-y border-[#1a3a2a] py-2">
+            {t("Official Notice", "आधिकारिक सूचना")}
+          </h2>
+
+          {printNoticeId === "__all__"
+            ? filteredNotices.map((n) => (
+                <div key={n.id} className="mb-8 pb-6 border-b border-gray-300 last:border-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold uppercase text-[#8b1a1a] bg-[#8b1a1a]/10 px-2 py-0.5 rounded">{t(n.category, n.category)}</span>
+                    {n.isPinned && <span className="text-xs font-bold text-[#c9a227]">★ {t("PINNED", "पिन गरिएको")}</span>}
+                    <span className="text-xs text-gray-500 ml-auto">{language === "NP" ? formatDateNp(n.date) : formatDateEn(n.date)}</span>
+                  </div>
+                  <h3 className="text-base font-bold font-serif text-[#1a3a2a]">{t(n.titleEn, n.titleNp)}</h3>
+                  <p className="text-sm text-gray-700 mt-2 leading-relaxed whitespace-pre-line">{t(n.contentEn, n.contentNp)}</p>
+                </div>
+              ))
+            : (() => {
+                const n = noticesData.find((x) => x.id === printNoticeId);
+                if (!n) return null;
+                return (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-bold uppercase text-[#8b1a1a] bg-[#8b1a1a]/10 px-2 py-0.5 rounded">{t(n.category, n.category)}</span>
+                      {n.isPinned && <span className="text-xs font-bold text-[#c9a227]">★ {t("PINNED", "पिन गरिएको")}</span>}
+                      <span className="text-xs text-gray-500 ml-auto">{language === "NP" ? formatDateNp(n.date) : formatDateEn(n.date)}</span>
+                    </div>
+                    <h3 className="text-lg font-bold font-serif text-[#1a3a2a]">{t(n.titleEn, n.titleNp)}</h3>
+                    <p className="text-sm text-gray-700 mt-3 leading-relaxed whitespace-pre-line">{t(n.contentEn, n.contentNp)}</p>
+                    <div className="mt-8 pt-4 border-t border-gray-300 text-xs text-gray-500 text-center">
+                      <p>{t("This is a computer-generated notice.", "यो कम्प्युटरबाट तयार गरिएको सूचना हो।")}</p>
+                    </div>
+                  </div>
+                );
+              })()}
+        </div>
+      )}
+
+      <style jsx>{`
+        @media print {
+          .no-print, .no-print * { display: none !important; }
+          .print\\:grid-cols-1 { grid-template-columns: 1fr !important; }
+          .print\\:shadow-none { box-shadow: none !important; }
+          .print\\:border-black { border-color: black !important; }
+          body { background: white !important; }
+          .print-formatted { display: block !important; }
+        }
+        .hidden.print-formatted { display: none; }
+      `}</style>
     </div>
   );
 }
