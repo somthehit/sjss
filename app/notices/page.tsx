@@ -341,7 +341,7 @@ export default function Notices() {
 
       {/* Print-only formatted notice */}
       {printNoticeId && (
-        <div className="hidden print-formatted">
+        <div className="print-formatted">
           {/* School letterhead */}
           <div className="text-center border-b-2 border-[#1a3a2a] pb-4 mb-6">
             <h1 className="text-2xl font-bold font-serif text-[#1a3a2a] uppercase">Shree Jiveen Shakti Secondary School</h1>
@@ -387,13 +387,12 @@ export default function Notices() {
         </div>
       )}
 
-      <style jsx global>{`
+      <style>{`
         @media print {
           body { visibility: hidden; background: white !important; }
           .print-formatted, .print-formatted * { visibility: visible; }
-          .print-formatted { position: absolute; top: 0; left: 5%; right: 5%; }
+          .print-formatted { display: block !important; position: absolute; top: 0; left: 5%; right: 5%; }
         }
-        .hidden.print-formatted { display: none; }
       `}</style>
     </div>
   );
