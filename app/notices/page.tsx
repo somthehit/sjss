@@ -121,6 +121,53 @@ export default function Notices() {
     } catch { return dateStr; }
   };
 
+  const getNoticeHTML = (notice: Notice): string => {
+    const catLabel = notice.category === "Exam" ? "परीक्षा" : notice.category === "Holiday" ? "बिदा" : notice.category === "Event" ? "कार्यक्रम" : notice.category === "Admission" ? "भर्ना" : "नतिजा";
+    const dateStr = language === "NP" ? formatDateNp(notice.date) : formatDateEn(notice.date);
+    const title = language === "NP" ? notice.titleNp : notice.titleEn;
+    const content = language === "NP" ? notice.contentNp : notice.contentEn;
+    const pinnedBadge = notice.isPinned ? '★ PINNED' : '';
+    const officialNoticeLabel = language === "NP" ? "आधिकारिक सूचना" : "Official Notice";
+    const footerNote = language === "NP" ? "यो कम्प्युटरबाट तयार गरिएको सूचना हो।" : "This is a computer-generated notice.";
+    return `
+      <div style="max-width:700px;margin:40px auto;font-family:Georgia,serif;color:#1a3a2a;">
+        <div style="text-align:center;border-bottom:2px solid #1a3a2a;padding-bottom:16px;margin-bottom:24px;">
+          <h1 style="font-size:22px;font-weight:bold;margin:0;text-transform:uppercase;">Shree Jiveen Shakti Secondary School</h1>
+          <p style="font-size:13px;color:#555;margin:4px 0;">Punarbas-9, Sitabasti, Kanchanpur, Nepal</p>
+          <p style="font-size:12px;color:#777;">Phone: +977-99-420XXX | Email: info@sjss.edu.np</p>
+          <p style="font-size:11px;color:#777;">EMIS: EMIS-00000 | School Code: SC-0000</p>
+        </div>
+        <h2 style="font-size:18px;font-weight:bold;text-align:center;text-transform:uppercase;border-top:1px solid #1a3a2a;border-bottom:1px solid #1a3a2a;padding:8px 0;margin-bottom:24px;">${officialNoticeLabel}</h2>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:11px;font-weight:bold;text-transform:uppercase;color:#8b1a1a;background:#8b1a1a10;padding:2px 8px;border-radius:4px;">${catLabel}</span>
+          ${pinnedBadge ? `<span style="font-size:11px;font-weight:bold;color:#c9a227;">${pinnedBadge}</span>` : ''}
+          <span style="font-size:11px;color:#888;margin-left:auto;">${dateStr}</span>
+        </div>
+        <h3 style="font-size:16px;font-weight:bold;margin:12px 0 8px;">${title}</h3>
+        <p style="font-size:13px;color:#444;line-height:1.6;white-space:pre-line;">${content}</p>
+        <div style="margin-top:32px;padding-top:12px;border-top:1px solid #ccc;text-align:center;font-size:11px;color:#999;">
+          <p>${footerNote}</p>
+        </div>
+      </div>
+    `;
+  };
+
+  const handleDownloadPDF = async (notice: Notice) => {
+    const html = getNoticeHTML(notice);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    document.body.appendChild(wrapper);
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      await html2pdf().from(wrapper).save(`notice-${notice.id}.pdf`);
+    } catch (e) {
+      console.error('PDF download failed:', e);
+    }
+    document.body.removeChild(wrapper);
+  };
+
   return (
     <div className="flex-1 flex flex-col py-10 px-6 max-w-5xl mx-auto w-full">
       {/* Title */}
@@ -284,7 +331,7 @@ export default function Notices() {
                 </button>
                 
                 <button
-                  onClick={() => handlePrintNotice(notice)}
+                  onClick={() => handleDownloadPDF(notice)}
                   className="text-xs font-bold text-[#444444]/40 hover:text-[#1a3a2a] flex items-center gap-1 cursor-pointer"
                 >
                   <Download className="w-3 h-3" />
