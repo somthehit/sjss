@@ -26,6 +26,15 @@ interface Notice {
   contentNp: string;
 }
 
+interface SchoolInfo {
+  phone: string;
+  email: string;
+  emis: string;
+  schoolCode: string;
+  addressEn: string;
+  addressNp: string;
+}
+
 export default function Notices() {
   const { t, language } = useLanguage();
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
@@ -33,6 +42,14 @@ export default function Notices() {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "pinned">("pinned");
   const [noticesData, setNoticesData] = useState<Notice[]>([]);
+  const [schoolInfo, setSchoolInfo] = useState<SchoolInfo>({
+    phone: '+977-99-420XXX',
+    email: 'info@sjss.edu.np',
+    emis: 'EMIS-00000',
+    schoolCode: 'SC-0000',
+    addressEn: 'Punarbas-9, Sitabasti, Kanchanpur, Nepal',
+    addressNp: 'पुनर्बास-९, सिताबस्ती, कञ्चनपुर, नेपाल',
+  });
   const [printNoticeId, setPrintNoticeId] = useState<string | null>(null);
   const printTriggerRef = useRef(false);
 
@@ -51,6 +68,22 @@ export default function Notices() {
           contentNp: n.content_np,
         }));
         setNoticesData(mapped);
+      })
+      .catch(console.error);
+    fetch('/api/settings')
+      .then(res => res.ok ? res.json() : { data: {} })
+      .then(json => {
+        const s = json.data || {};
+        if (s.phone || s.email || s.emis || s.school_code) {
+          setSchoolInfo({
+            phone: s.phone || '+977-99-420XXX',
+            email: s.email || 'info@sjss.edu.np',
+            emis: s.emis || 'EMIS-00000',
+            schoolCode: s.school_code || 'SC-0000',
+            addressEn: s.address_en || 'Punarbas-9, Sitabasti, Kanchanpur, Nepal',
+            addressNp: s.address_np || 'पुनर्बास-९, सिताबस्ती, कञ्चनपुर, नेपाल',
+          });
+        }
       })
       .catch(console.error);
   }, []);
@@ -121,7 +154,7 @@ export default function Notices() {
     } catch { return dateStr; }
   };
 
-  const getNoticeHTML = (notice: Notice): string => {
+  const getNoticeHTML = (notice: Notice, info: SchoolInfo): string => {
     const catLabel = notice.category === "Exam" ? "परीक्षा" : notice.category === "Holiday" ? "बिदा" : notice.category === "Event" ? "कार्यक्रम" : notice.category === "Admission" ? "भर्ना" : "नतिजा";
     const dateStr = language === "NP" ? formatDateNp(notice.date) : formatDateEn(notice.date);
     const title = language === "NP" ? notice.titleNp : notice.titleEn;
@@ -133,9 +166,9 @@ export default function Notices() {
       <div style="max-width:700px;margin:40px auto;font-family:Georgia,serif;color:#1a3a2a;">
         <div style="text-align:center;border-bottom:2px solid #1a3a2a;padding-bottom:16px;margin-bottom:24px;">
           <h1 style="font-size:22px;font-weight:bold;margin:0;text-transform:uppercase;">Shree Jiveen Shakti Secondary School</h1>
-          <p style="font-size:13px;color:#555;margin:4px 0;">Punarbas-9, Sitabasti, Kanchanpur, Nepal</p>
-          <p style="font-size:12px;color:#777;">Phone: +977-99-420XXX | Email: info@sjss.edu.np</p>
-          <p style="font-size:11px;color:#777;">EMIS: EMIS-00000 | School Code: SC-0000</p>
+          <p style="font-size:13px;color:#555;margin:4px 0;">${info.addressEn}</p>
+          <p style="font-size:12px;color:#777;">Phone: ${info.phone} | Email: ${info.email}</p>
+          <p style="font-size:11px;color:#777;">EMIS: ${info.emis} | School Code: ${info.schoolCode}</p>
         </div>
         <h2 style="font-size:18px;font-weight:bold;text-align:center;text-transform:uppercase;border-top:1px solid #1a3a2a;border-bottom:1px solid #1a3a2a;padding:8px 0;margin-bottom:24px;">${officialNoticeLabel}</h2>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -153,7 +186,7 @@ export default function Notices() {
   };
 
   const handleDownloadPDF = (notice: Notice) => {
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Notice - ${notice.titleEn}</title></head><body>${getNoticeHTML(notice)}</body></html>`;
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Notice - ${notice.titleEn}</title></head><body>${getNoticeHTML(notice, schoolInfo)}</body></html>`;
     const win = window.open('', '_blank', 'width=800,height=600');
     if (!win) { alert('Pop-up blocked! Please allow pop-ups for this site.'); return; }
     win.document.write(html);
@@ -386,9 +419,9 @@ export default function Notices() {
           {/* School letterhead */}
           <div className="text-center border-b-2 border-[#1a3a2a] pb-4 mb-6">
             <h1 className="text-2xl font-bold font-serif text-[#1a3a2a] uppercase">Shree Jiveen Shakti Secondary School</h1>
-            <p className="text-sm text-gray-600">Punarbas-9, Sitabasti, Kanchanpur, Nepal</p>
-            <p className="text-xs text-gray-500">Phone: +977-99-420XXX | Email: info@sjss.edu.np</p>
-            <p className="text-xs text-gray-500">EMIS: EMIS-00000 | School Code: SC-0000</p>
+            <p className="text-sm text-gray-600">{schoolInfo.addressEn}</p>
+            <p className="text-xs text-gray-500">Phone: {schoolInfo.phone} | Email: {schoolInfo.email}</p>
+            <p className="text-xs text-gray-500">EMIS: {schoolInfo.emis} | School Code: {schoolInfo.schoolCode}</p>
           </div>
 
           <h2 className="text-lg font-bold font-serif text-center uppercase mb-6 border-y border-[#1a3a2a] py-2">
