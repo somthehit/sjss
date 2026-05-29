@@ -181,6 +181,9 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
     announcementTextNp: "एस.ई.ई. परीक्षा नतिजा २०८१ प्रकाशित भएको छ! नतिजा ट्याबमा हेर्नुहोस्। | शैक्षिक वर्ष २०८३ को लागि भर्ना खुला गरिएको छ!",
     announcementVisible: true,
     maintenanceMode: false,
+    popupNoticeEnabled: false,
+    popupNoticeEn: "",
+    popupNoticeNp: "",
     emis: "EMIS-00000",
     schoolCode: "SC-0000",
     logoUrl: "",
@@ -244,13 +247,46 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
       localStorage.setItem("sjss_results", JSON.stringify(defaultResults));
     }
 
-    const localSettings = localStorage.getItem("sjss_settings");
-    if (localSettings) {
-      const parsed = JSON.parse(localSettings);
-      setSiteSettings((prev) => ({ ...prev, ...parsed }));
-    } else {
-      localStorage.setItem("sjss_settings", JSON.stringify(siteSettings));
-    }
+    // Fetch settings from API
+    fetch('/api/settings').then(r => r.json()).then(json => {
+      if (json.success && json.data) {
+        const s = json.data;
+        const mapped: Record<string, any> = {
+          mottoEn: s.school_motto_en,
+          mottoNp: s.school_motto_np,
+          principalMessageEn: s.principal_message_en,
+          principalMessageNp: s.principal_message_np,
+          announcementTextEn: s.announcement_text_en,
+          announcementTextNp: s.announcement_text_np,
+          totalStudents: s.total_students,
+          totalStaff: s.total_staff,
+          establishedYearBS: s.established_year_bs,
+          schoolClasses: s.school_classes,
+          phoneEn: s.phone,
+          email: s.email,
+          addressEn: s.address_en,
+          addressNp: s.address_np,
+          emis: s.emis,
+          schoolCode: s.school_code,
+          logoUrl: s.logo_url,
+          calendar_year: s.calendar_year,
+          announcementVisible: s.announcement_visible === 'true',
+          maintenanceMode: s.maintenance_mode === 'true',
+          popupNoticeEnabled: s.popup_notice_enabled === 'true',
+          popupNoticeEn: s.popup_notice_en,
+          popupNoticeNp: s.popup_notice_np,
+        };
+        setSiteSettings((prev) => ({ ...prev, ...mapped }));
+        localStorage.setItem('sjss_settings', JSON.stringify(mapped));
+      }
+    }).catch(() => {
+      // Fallback to localStorage
+      const localSettings = localStorage.getItem("sjss_settings");
+      if (localSettings) {
+        const parsed = JSON.parse(localSettings);
+        setSiteSettings((prev) => ({ ...prev, ...parsed }));
+      }
+    });
   }, []);
 
   const handleLogout = () => {
@@ -554,6 +590,11 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
         school_code: siteSettings.schoolCode || "",
         logo_url: siteSettings.logoUrl || "",
         calendar_year: siteSettings.calendar_year,
+        announcement_visible: String(siteSettings.announcementVisible),
+        maintenance_mode: String(siteSettings.maintenanceMode),
+        popup_notice_enabled: String(siteSettings.popupNoticeEnabled),
+        popup_notice_en: siteSettings.popupNoticeEn || "",
+        popup_notice_np: siteSettings.popupNoticeNp || "",
       };
 
       const res = await fetch('/api/settings', {
@@ -2055,6 +2096,26 @@ Thank you. Wishing everyone a highly productive and fulfilling academic year.`,
                   />
                   <label htmlFor="maintenanceSwitch" className="cursor-pointer text-[#8b1a1a]">Enable System Maintenance Mode</label>
                 </div>
+              </div>
+
+              {/* Popup Notice */}
+              <div className="border-t border-[#c9a227]/20 pt-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="popupNoticeSwitch" checked={siteSettings.popupNoticeEnabled} onChange={(e) => setSiteSettings({ ...siteSettings, popupNoticeEnabled: e.target.checked })} className="w-4 h-4 accent-[#1a3a2a] cursor-pointer" />
+                  <label htmlFor="popupNoticeSwitch" className="font-bold text-xs text-[#1a3a2a] cursor-pointer">Enable Popup Notice</label>
+                </div>
+                {siteSettings.popupNoticeEnabled && (
+                  <div className="grid sm:grid-cols-2 gap-4 pl-6">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-semibold text-[#1a3a2a] text-xs">Popup Notice (English)</label>
+                      <textarea rows={3} value={siteSettings.popupNoticeEn} onChange={(e) => setSiteSettings({ ...siteSettings, popupNoticeEn: e.target.value })} className="p-2 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none text-sm" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="font-semibold text-[#1a3a2a] text-xs">Popup Notice (Nepali)</label>
+                      <textarea rows={3} value={siteSettings.popupNoticeNp} onChange={(e) => setSiteSettings({ ...siteSettings, popupNoticeNp: e.target.value })} className="p-2 border border-[#c9a227]/30 bg-[#fdf6e3]/30 rounded focus:outline-none text-sm font-bold" />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Submit */}

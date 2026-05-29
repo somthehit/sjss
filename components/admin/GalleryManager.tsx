@@ -40,6 +40,11 @@ export default function GalleryManager() {
   // Lightbox state
   const [lightboxUrl, setLightboxUrl] = useState("");
 
+  // Edit caption state
+  const [editingImage, setEditingImage] = useState<GalleryImage | null>(null);
+  const [editCaptionEn, setEditCaptionEn] = useState("");
+  const [editCaptionNp, setEditCaptionNp] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchAlbums = async () => {
@@ -233,6 +238,31 @@ export default function GalleryManager() {
     }
   };
 
+  const handleEditImage = (image: GalleryImage) => {
+    setEditingImage(image);
+    setEditCaptionEn(image.caption_en || "");
+    setEditCaptionNp(image.caption_np || "");
+  };
+
+  const handleSaveCaption = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAlbum || !editingImage) return;
+    try {
+      const res = await fetch(`/api/gallery/${selectedAlbum.id}?imageId=${editingImage.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caption_en: editCaptionEn, caption_np: editCaptionNp }),
+      });
+      if (res.ok) {
+        setEditingImage(null);
+        await fetchAlbumDetails(selectedAlbum.id);
+        fetchAlbums();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   // Album detail view
   if (selectedAlbum) {
     const imageCount = selectedAlbum.images?.length || 0;
@@ -381,6 +411,13 @@ export default function GalleryManager() {
                           <Eye className="w-3.5 h-3.5" />
                         </button>
                         <button
+                          onClick={() => handleEditImage(image)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-md"
+                          title="Edit Caption"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
                           onClick={() => handleDeleteImage(image.id)}
                           className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md"
                           title="Delete Photo"
@@ -414,6 +451,37 @@ export default function GalleryManager() {
               className="max-w-full max-h-[90vh] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
             />
+          </div>
+        )}
+
+        {/* Edit Caption Modal */}
+        {editingImage && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditingImage(null)}>
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-4" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-[#1a3a2a]">Edit Caption</h3>
+                <button onClick={() => setEditingImage(null)} className="p-1 rounded-full hover:bg-gray-100">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              {editingImage.url && (
+                <img src={editingImage.url} alt="" className="w-full h-40 object-cover rounded-lg mb-4" />
+              )}
+              <form onSubmit={handleSaveCaption} className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-700">Caption (English)</label>
+                  <input type="text" value={editCaptionEn} onChange={e => setEditCaptionEn(e.target.value)} className="w-full border rounded-lg p-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-[#1a3a2a]" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700">Caption (Nepali)</label>
+                  <input type="text" value={editCaptionNp} onChange={e => setEditCaptionNp(e.target.value)} className="w-full border rounded-lg p-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-[#1a3a2a]" />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setEditingImage(null)} className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-50">Cancel</button>
+                  <button type="submit" className="flex-1 bg-[#1a3a2a] text-white py-2 rounded-lg font-bold hover:bg-[#2a5a4a]">Save</button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>

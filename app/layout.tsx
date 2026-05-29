@@ -3,6 +3,7 @@ import { Playfair_Display, Inter, Noto_Sans_Devanagari } from "next/font/google"
 import "./globals.css";
 import { LanguageProvider } from "@/components/LanguageContext";
 import AnnouncementBar from "@/components/AnnouncementBar";
+import PopupNotice from "@/components/PopupNotice";
 import DesktopIconRail from "@/components/DesktopIconRail";
 import OrbitalNavigation from "@/components/OrbitalNavigation";
 
@@ -59,6 +60,7 @@ export default function RootLayout({
 
           {/* Floating Navigation Trigger and Overlay Drawer */}
           <OrbitalNavigation />
+          <PopupNotice />
         </LanguageProvider>
       </body>
     </html>

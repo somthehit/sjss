@@ -6,15 +6,24 @@ import { useLanguage } from "./LanguageContext";
 
 export default function AnnouncementBar() {
   const [isVisible, setIsVisible] = useState(false);
+  const [announcementEN, setAnnouncementEN] = useState("");
+  const [announcementNP, setAnnouncementNP] = useState("");
   const { t } = useLanguage();
 
-  // Load state and setting visibility
   useEffect(() => {
-    const isDismissed = localStorage.getItem("announcement_dismissed");
-    // For demonstration and actual use, we will show if not dismissed
-    if (!isDismissed) {
-      setIsVisible(true);
-    }
+    fetch('/api/settings').then(r => r.json()).then(json => {
+      if (json.success && json.data) {
+        const s = json.data;
+        const en = s.announcement_text_en || "";
+        const np = s.announcement_text_np || "";
+        setAnnouncementEN(en);
+        setAnnouncementNP(np);
+        const enabled = s.announcement_visible === 'true';
+        if (enabled && en && !localStorage.getItem("announcement_dismissed")) {
+          setIsVisible(true);
+        }
+      }
+    }).catch(() => {});
   }, []);
 
   const handleDismiss = () => {
@@ -22,10 +31,7 @@ export default function AnnouncementBar() {
     localStorage.setItem("announcement_dismissed", "true");
   };
 
-  if (!isVisible) return null;
-
-  const announcementTextEN = "SEE Examination Results 2081 are out! Check your scores in the Results tab. | Admissions for Academic Year 2083 are now open! | Notice: School is closed on Jestha 15 for Republic Day.";
-  const announcementTextNP = "एस.ई.ई. परीक्षा नतिजा २०८१ प्रकाशित भएको छ! नतिजा ट्याबमा हेर्नुहोस्। | शैक्षिक वर्ष २०८३ को लागि भर्ना खुला गरिएको छ! | सूचना: गणतन्त्र दिवसको उपलक्ष्यमा जेठ १५ गते विद्यालय बिदा रहनेछ।";
+  if (!isVisible || !announcementEN) return null;
 
   return (
     <div className="no-print relative w-full bg-[#8b1a1a] text-white py-2 px-4 flex items-center justify-between overflow-hidden border-b border-[#c9a227] z-50">
@@ -34,17 +40,15 @@ export default function AnnouncementBar() {
           <Megaphone className="w-4 h-4 animate-bounce" />
           <span>{t("URGENT:", "महत्वपूर्ण सूचना:")}</span>
         </div>
-        
-        {/* Ticker Animation Container */}
+
         <div className="relative flex overflow-x-hidden w-full font-medium text-xs md:text-sm">
           <div className="animate-marquee whitespace-nowrap flex gap-8">
-            <span className="mx-4">{t(announcementTextEN, announcementTextNP)}</span>
-            <span className="mx-4">{t(announcementTextEN, announcementTextNP)}</span>
+            <span className="mx-4">{t(announcementEN, announcementNP)}</span>
+            <span className="mx-4">{t(announcementEN, announcementNP)}</span>
           </div>
-
           <div className="absolute top-0 animate-marquee2 whitespace-nowrap flex gap-8">
-            <span className="mx-4">{t(announcementTextEN, announcementTextNP)}</span>
-            <span className="mx-4">{t(announcementTextEN, announcementTextNP)}</span>
+            <span className="mx-4">{t(announcementEN, announcementNP)}</span>
+            <span className="mx-4">{t(announcementEN, announcementNP)}</span>
           </div>
         </div>
       </div>
@@ -57,7 +61,6 @@ export default function AnnouncementBar() {
         <X className="w-4 h-4" />
       </button>
 
-      {/* Marquee Keyframes injection */}
       <style jsx global>{`
         @keyframes marquee {
           0% { transform: translateX(0%); }

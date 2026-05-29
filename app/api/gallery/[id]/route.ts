@@ -58,6 +58,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    const url = new URL(request.url);
+    const imageId = url.searchParams.get('imageId');
+
+    // Update individual image caption
+    if (imageId) {
+      const body = await request.json();
+      const { caption_en, caption_np } = body;
+
+      const { data, error } = await supabaseAdmin()
+        .from('gallery_images')
+        .update({ caption_en: caption_en ?? null, caption_np: caption_np ?? null })
+        .eq('id', parseInt(imageId))
+        .select()
+        .single();
+
+      if (error) throw error;
+      return NextResponse.json({ success: true, data });
+    }
+
+    // Update album
     const body = await request.json();
 
     const { data, error } = await supabaseAdmin()
