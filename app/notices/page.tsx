@@ -387,14 +387,11 @@ export default function Notices() {
         </div>
       )}
 
-      <style jsx>{`
+      <style jsx global>{`
         @media print {
-          .no-print, .no-print * { display: none !important; }
-          .print\\:grid-cols-1 { grid-template-columns: 1fr !important; }
-          .print\\:shadow-none { box-shadow: none !important; }
-          .print\\:border-black { border-color: black !important; }
-          body { background: white !important; }
-          .print-formatted { display: block !important; }
+          body { visibility: hidden; background: white !important; }
+          .print-formatted, .print-formatted * { visibility: visible; }
+          .print-formatted { position: absolute; top: 0; left: 5%; right: 5%; }
         }
         .hidden.print-formatted { display: none; }
       `}</style>
